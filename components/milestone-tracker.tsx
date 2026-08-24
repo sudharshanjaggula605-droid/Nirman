@@ -6,6 +6,8 @@ interface Milestone {
   description?: string | null;
   completion_percentage: number;
   status: "pending" | "in_progress" | "completed" | "delayed";
+  due_date?: string | null;
+  amount?: number | null;
 }
 
 interface MilestoneTrackerProps {

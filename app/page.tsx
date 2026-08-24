@@ -76,6 +76,7 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [selectedSort, setSelectedSort] = useState("latest");
   const [loading, setLoading] = useState(true);
+  const [heroImgError, setHeroImgError] = useState(false);
 
   const supabase = createClient();
 
@@ -218,17 +219,28 @@ export default function HomePage() {
             {/* Right Visual Image */}
             <div className="lg:col-span-5">
               <div className="relative mx-auto max-w-md lg:max-w-none rounded-2xl border bg-card p-3 shadow-2xl overflow-hidden">
-                <div className="relative h-[360px] w-full rounded-xl overflow-hidden">
-                  <Image
-                    src="https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1200&q=80"
-                    alt="NIRMAN Construction Platform"
-                    fill
-                    className="object-cover"
-                    priority
-                  />
+                <div className="relative h-[360px] w-full rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 via-orange-950/60 to-slate-900">
+                  {!heroImgError ? (
+                    <Image
+                      src="https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1200&q=80"
+                      alt="NIRMAN Construction Platform"
+                      fill
+                      className="object-cover"
+                      priority
+                      onError={() => setHeroImgError(true)}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-3">
+                      <div className="h-16 w-16 rounded-2xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400">
+                        <HardHat className="h-8 w-8" />
+                      </div>
+                      <div className="text-lg font-bold text-white">NIRMAN Marketplace</div>
+                      <p className="text-xs text-slate-300 max-w-xs">Connecting verified property owners with top-rated civil contractors.</p>
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   
-                  <div className="absolute bottom-4 left-4 right-4 p-4 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 text-white space-y-1">
+                  <div className="absolute bottom-4 left-4 right-4 p-4 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 text-white space-y-1 z-10">
                     <div className="flex items-center justify-between text-xs font-semibold text-orange-400">
                       <span>Live Tender Activity</span>
                       <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />

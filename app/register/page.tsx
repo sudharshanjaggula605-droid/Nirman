@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { HardHat, UserCheck, Building2, AlertCircle } from "lucide-react";
 import { registerAction } from "@/actions/auth";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const searchParams = useSearchParams();
   const defaultRole = searchParams.get("role") === "contractor" ? "contractor" : "owner";
 
@@ -173,5 +173,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto py-12 text-center text-sm text-muted-foreground">Loading registration form...</div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }

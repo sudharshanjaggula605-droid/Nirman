@@ -1,6 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Calendar, Building, Layers, ArrowUpRight } from "lucide-react";
+import { MapPin, Calendar, Building, Layers, ArrowUpRight, HardHat } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 interface TenderCardProps {
@@ -28,6 +31,7 @@ interface TenderCardProps {
 }
 
 export function TenderCard({ tender }: TenderCardProps) {
+  const [imgError, setImgError] = useState(false);
   const imageUrl =
     tender.images && tender.images.length > 0
       ? tender.images[0].image_url
@@ -42,13 +46,20 @@ export function TenderCard({ tender }: TenderCardProps) {
   return (
     <div className="group relative flex flex-col rounded-xl border bg-card text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg hover:border-orange-500/40 overflow-hidden">
       {/* Image Header with Category Badge */}
-      <div className="relative h-48 w-full bg-muted overflow-hidden">
-        <Image
-          src={imageUrl}
-          alt={tender.title}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+      <div className="relative h-48 w-full bg-slate-900 overflow-hidden">
+        {!imgError ? (
+          <Image
+            src={imageUrl}
+            alt={tender.title}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-orange-950/40 to-slate-900 flex items-center justify-center">
+            <HardHat className="h-16 w-16 text-orange-500/30" />
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         
         {/* Category Pill */}

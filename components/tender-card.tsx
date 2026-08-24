@@ -35,7 +35,7 @@ export function TenderCard({ tender }: TenderCardProps) {
   const imageUrl =
     tender.images && tender.images.length > 0
       ? tender.images[0].image_url
-      : "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=800&q=80";
+      : "/tender-residential.jpg";
 
   const budget = tender.budget_max || tender.project?.estimated_budget || 0;
   const categoryName = tender.project?.category?.name || "General Construction";

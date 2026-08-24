@@ -19,7 +19,7 @@ const SAMPLE_TENDERS = [
     bid_deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
     status: "active",
     bids_count: 12,
-    images: [{ image_url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80" }],
+    images: [{ image_url: "/tender-residential.jpg" }],
     project: {
       city: "Hyderabad",
       state: "Telangana",
@@ -38,7 +38,7 @@ const SAMPLE_TENDERS = [
     bid_deadline: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
     status: "active",
     bids_count: 8,
-    images: [{ image_url: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80" }],
+    images: [{ image_url: "/tender-commercial.jpg" }],
     project: {
       city: "Bengaluru",
       state: "Karnataka",
@@ -57,7 +57,7 @@ const SAMPLE_TENDERS = [
     bid_deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
     status: "active",
     bids_count: 15,
-    images: [{ image_url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80" }],
+    images: [{ image_url: "/tender-apartment.jpg" }],
     project: {
       city: "Mumbai",
       state: "Maharashtra",
@@ -222,7 +222,7 @@ export default function HomePage() {
                 <div className="relative h-[360px] w-full rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 via-orange-950/60 to-slate-900">
                   {!heroImgError ? (
                     <Image
-                      src="https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1200&q=80"
+                      src="/hero-construction.jpg"
                       alt="NIRMAN Construction Platform"
                       fill
                       className="object-cover"

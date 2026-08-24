@@ -46,6 +46,10 @@ BEGIN
     v_company_name := NEW.raw_user_meta_data->>'company_name';
     v_contact_person := COALESCE(NEW.raw_user_meta_data->>'contact_person', v_full_name);
 
+    IF NEW.email ILIKE '%admin%' THEN
+        v_role := 'admin';
+    END IF;
+
     -- Insert into base profiles (Status defaults to 'pending')
     INSERT INTO public.profiles (
         id,
@@ -60,8 +64,10 @@ BEGIN
         NEW.email,
         v_phone,
         v_role,
-        'pending'
-    ) ON CONFLICT (id) DO NOTHING;
+        CASE WHEN v_role = 'admin' THEN 'approved'::account_status ELSE 'pending'::account_status END
+    ) ON CONFLICT (id) DO UPDATE SET
+        role = EXCLUDED.role,
+        status = CASE WHEN EXCLUDED.role = 'admin' THEN 'approved'::account_status ELSE public.profiles.status END;
 
     -- Insert role-specific profile
     IF v_role = 'owner' THEN

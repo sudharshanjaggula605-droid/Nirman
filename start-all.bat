@@ -1,0 +1,3 @@
+@echo off
+echo Starting NIRMAN Next.js App Router Platform...
+npm run dev

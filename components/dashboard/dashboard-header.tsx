@@ -33,15 +33,26 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
         setProfile(userProfile);
 
         // Fetch unread notifications count from database
-        const { count } = await supabase
+        const { count: notifCount } = await supabase
           .from("notifications")
           .select("*", { count: "exact", head: true })
           .eq("user_id", currentUser.id)
           .eq("is_read", false);
 
-        if (count !== null && count !== undefined) {
-          setUnreadNotifs(count);
+        let totalUnread = notifCount || 0;
+
+        if (userProfile?.role === "admin") {
+          const { count: openSupportCount } = await supabase
+            .from("support_requests")
+            .select("*", { count: "exact", head: true })
+            .eq("status", "open");
+
+          if (openSupportCount) {
+            totalUnread = Math.max(totalUnread, openSupportCount);
+          }
         }
+
+        setUnreadNotifs(totalUnread);
       }
     }
     loadUser();

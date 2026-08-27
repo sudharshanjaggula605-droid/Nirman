@@ -55,7 +55,7 @@ export default function CreateProjectPage() {
     const formData = new FormData();
     formData.set("title", title);
     formData.set("description", description);
-    formData.set("category_id", "1"); // Defaults to category
+    formData.set("category_name", categoryName);
     formData.set("property_type", propertyType);
     formData.set("area_sqft", areaSqft);
     formData.set("estimated_budget", estimatedBudget);

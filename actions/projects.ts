@@ -11,7 +11,8 @@ export async function createProjectAndPublishTender(formData: FormData) {
 
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
-  const category_id = formData.get("category_id") as string;
+  const rawCategoryId = formData.get("category_id") as string;
+  const categoryName = formData.get("category_name") as string;
   const property_type = formData.get("property_type") as string;
   const area_sqft = parseFloat(formData.get("area_sqft") as string || "0");
   const estimated_budget = parseFloat(formData.get("estimated_budget") as string || "0");
@@ -26,12 +27,31 @@ export async function createProjectAndPublishTender(formData: FormData) {
 
   const isPublishing = actionType === "publish";
 
+  // Validate UUID or resolve category ID from project_categories table
+  const isValidUUID = (id?: string | null) =>
+    Boolean(id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+
+  let category_id: string | null = isValidUUID(rawCategoryId) ? rawCategoryId : null;
+
+  if (!category_id && categoryName) {
+    const { data: catData } = await supabase
+      .from("project_categories")
+      .select("id")
+      .ilike("name", `%${categoryName}%`)
+      .limit(1)
+      .maybeSingle();
+
+    if (catData?.id) {
+      category_id = catData.id;
+    }
+  }
+
   // 1. Insert Project
   const { data: project, error: projectError } = await supabase
     .from("projects")
     .insert({
       owner_id: user.id,
-      category_id: category_id || null,
+      category_id: category_id,
       title,
       description,
       property_type,

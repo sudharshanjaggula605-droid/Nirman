@@ -73,6 +73,29 @@ export async function createProjectAndPublishTender(formData: FormData) {
     return { error: tenderError.message };
   }
 
+  // 3. Insert Project Documents / Attachments (if uploaded)
+  const attachmentsRaw = formData.get("attachments") as string;
+  if (attachmentsRaw) {
+    try {
+      const attachments = JSON.parse(attachmentsRaw);
+      if (Array.isArray(attachments) && attachments.length > 0) {
+        const docsToInsert = attachments.map((att: any) => ({
+          project_id: project.id,
+          file_name: att.name || att.file_name || "Blueprint Attachment",
+          file_url: att.url || att.file_url || "#",
+          storage_path: att.storage_path || `projects/${project.id}/${att.name}`,
+          file_type: att.type || att.file_type || "pdf",
+          file_size: att.size || att.file_size || 0,
+          uploaded_by: user.id,
+        }));
+
+        await supabase.from("project_documents").insert(docsToInsert);
+      }
+    } catch (docErr) {
+      console.error("Error inserting project documents:", docErr);
+    }
+  }
+
   revalidatePath("/");
   revalidatePath("/owner/tenders");
   revalidatePath("/owner/projects");

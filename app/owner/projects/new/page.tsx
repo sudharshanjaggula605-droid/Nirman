@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { HardHat, Building2, MapPin, Layers, Upload, ArrowRight, ArrowLeft, Check, AlertCircle } from "lucide-react";
+import { HardHat, Building2, MapPin, Layers, Upload, ArrowRight, ArrowLeft, Check, AlertCircle, FileText, X } from "lucide-react";
 import { createProjectAndPublishTender } from "@/actions/projects";
 
 export default function CreateProjectPage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,6 +29,25 @@ export default function CreateProjectPage() {
     new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
 
+  // Attachments State
+  const [attachments, setAttachments] = useState<Array<{ id: string; name: string; size: number; type: string; file?: File }>>([]);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleFilesSelect = (selectedFiles: File[]) => {
+    const newItems = selectedFiles.map((file) => ({
+      id: Math.random().toString(36).substring(2, 9),
+      name: file.name,
+      size: file.size,
+      type: file.type || file.name.split(".").pop() || "file",
+      file,
+    }));
+    setAttachments((prev) => [...prev, ...newItems]);
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
+  };
+
   const handleAction = async (actionType: "draft" | "publish") => {
     setError(null);
     setLoading(true);
@@ -47,6 +67,16 @@ export default function CreateProjectPage() {
     formData.set("expected_completion_date", completionDate);
     formData.set("bid_deadline", bidDeadline);
     formData.set("actionType", actionType);
+
+    if (attachments.length > 0) {
+      const serialized = attachments.map((att) => ({
+        name: att.name,
+        size: att.size,
+        type: att.type,
+        url: "#",
+      }));
+      formData.set("attachments", JSON.stringify(serialized));
+    }
 
     const result = await createProjectAndPublishTender(formData);
 
@@ -270,14 +300,104 @@ export default function CreateProjectPage() {
 
         {/* Step 4: Uploads */}
         {step === 4 && (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <h3 className="font-bold text-sm text-foreground uppercase tracking-wider">Step 4: Blueprints & Attachments</h3>
 
-            <div className="rounded-xl border-2 border-dashed p-8 text-center space-y-2 bg-muted/20">
-              <Upload className="h-8 w-8 text-orange-500 mx-auto" />
-              <div className="text-xs font-bold text-foreground">Upload Drawings, BOQ or CAD Files</div>
-              <p className="text-[11px] text-muted-foreground">PDF, DWG, PNG up to 25MB (Will upload to Supabase Storage)</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg,.zip,.cad,.doc,.docx,.xlsx"
+              onChange={(e) => e.target.files && handleFilesSelect(Array.from(e.target.files))}
+              className="hidden"
+            />
+
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                if (e.dataTransfer.files) {
+                  handleFilesSelect(Array.from(e.dataTransfer.files));
+                }
+              }}
+              className={`cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center space-y-3 transition-all ${
+                isDragging
+                  ? "border-orange-600 bg-orange-500/10 shadow-inner"
+                  : "border-border hover:border-orange-500/50 bg-muted/20 hover:bg-muted/40"
+              }`}
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600 mx-auto">
+                <Upload className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs font-extrabold text-foreground">
+                  Click or Drag & Drop Drawings, BOQ or CAD Files
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  PDF, DWG, DXF, PNG, ZIP up to 25MB (Will upload to project documents)
+                </p>
+              </div>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-orange-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-orange-700 transition-all pointer-events-none"
+              >
+                Browse Files from Device
+              </button>
             </div>
+
+            {attachments.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <div className="text-xs font-bold text-foreground flex items-center justify-between">
+                  <span>Selected Documents & Blueprints ({attachments.length})</span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachments([])}
+                    className="text-[11px] text-rose-600 hover:underline font-bold"
+                  >
+                    Clear All
+                  </button>
+                </div>
+
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {attachments.map((att) => (
+                    <div
+                      key={att.id}
+                      className="flex items-center justify-between rounded-xl border bg-card p-3 text-xs shadow-sm transition-all hover:border-orange-500/30"
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500/10 text-orange-600 shrink-0 font-bold">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <div className="truncate text-left space-y-0.5">
+                          <p className="font-bold text-foreground truncate">{att.name}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {(att.size / (1024 * 1024)).toFixed(2)} MB • {att.name.split(".").pop()?.toUpperCase() || "DOCUMENT"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeAttachment(att.id);
+                        }}
+                        className="p-1.5 rounded-lg border hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-colors shrink-0"
+                        title="Remove File"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -291,6 +411,7 @@ export default function CreateProjectPage() {
               <div className="flex justify-between"><span className="text-muted-foreground">Location:</span> <strong className="text-foreground">{city}, {state}</strong></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Area & Budget:</span> <strong className="text-orange-600">{areaSqft} Sq.ft | ₹{parseFloat(estimatedBudget || "0").toLocaleString()}</strong></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Bid Deadline:</span> <strong className="text-foreground">{bidDeadline}</strong></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Attached Files:</span> <strong className="text-foreground">{attachments.length} Document(s)</strong></div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">

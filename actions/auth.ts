@@ -12,12 +12,7 @@ export async function loginAction(formData: FormData) {
     return { error: "Email and password are required." };
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!supabaseUrl || supabaseUrl.includes("your-project-id")) {
-    return {
-      error: "Supabase connection error: Please update .env.local with your real Supabase URL and Publishable Key.",
-    };
-  }
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mbljyfeoicpbptndgtcm.supabase.co";
 
   const supabase = createClient();
   const adminClient = createAdminClient();
@@ -175,12 +170,7 @@ export async function registerOwnerAction(formData: FormData) {
   const state = (formData.get("state") as string)?.trim();
   const pincode = (formData.get("pincode") as string)?.trim();
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!supabaseUrl || supabaseUrl.includes("your-project-id")) {
-    return {
-      error: "Supabase connection error: Please update .env.local with your real Supabase URL and Publishable Key.",
-    };
-  }
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mbljyfeoicpbptndgtcm.supabase.co";
 
   const supabase = createClient();
 
@@ -257,12 +247,7 @@ export async function registerContractorAction(formData: FormData) {
   const years_of_experience = parseInt(formData.get("years_of_experience") as string || "0", 10);
   const projectPhotos = formData.getAll("project_photos").map((p) => p.toString()).filter(Boolean);
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!supabaseUrl || supabaseUrl.includes("your-project-id")) {
-    return {
-      error: "Supabase connection error: Please update .env.local with your real Supabase URL and Publishable Key.",
-    };
-  }
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mbljyfeoicpbptndgtcm.supabase.co";
 
   const supabase = createClient();
 

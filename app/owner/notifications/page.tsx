@@ -1,33 +1,76 @@
 "use client";
 
-import { Bell, CheckCircle2, FileText, CreditCard, Clock } from "lucide-react";
+import { useState } from "react";
+import { Bell, CheckCircle2, DollarSign, MessageSquare, FileText, Sparkles } from "lucide-react";
 
 export default function OwnerNotificationsPage() {
-  const NOTIFICATIONS = [
-    { id: "1", title: "New Proposal Received", desc: "BuildPro Constructions submitted a bid of ₹32.5L for Modern Duplex Villa.", time: "1 hour ago" },
-    { id: "2", title: "Milestone Update Submitted", desc: "Contractor submitted Milestone 3 progress update & site photo for verification.", time: "4 hours ago" },
-    { id: "3", title: "Tender Closing Soon", desc: "Commercial Office Fit-out tender closes in 48 hours.", time: "1 day ago" },
-  ];
+  const [notifications, setNotifications] = useState([
+    {
+      id: "n-1",
+      title: "New Bid Received",
+      message: "ABC Constructions submitted a bid of ₹28.50 Lakhs for 3BHK Independent Villa.",
+      type: "new_bid",
+      time: "10 mins ago",
+      unread: true,
+    },
+    {
+      id: "n-2",
+      title: "Project Milestone Update",
+      message: "Contractor uploaded brick work site inspection photos for 3BHK Independent Villa.",
+      type: "project_update",
+      time: "2 hours ago",
+      unread: true,
+    },
+    {
+      id: "n-3",
+      title: "Payment Request",
+      message: "Contractor requested release for Milestone #2 (Slab & Brick Work - ₹10.50 Lakhs).",
+      type: "payment_request",
+      time: "Yesterday",
+      unread: true,
+    },
+  ]);
+
+  const markAllAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+  };
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="border-b pb-4">
-        <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
-        <p className="text-xs text-muted-foreground">Stay updated on new contractor bids, milestone progress updates, and payment requests</p>
+    <div className="max-w-3xl mx-auto space-y-6 pb-12">
+      <div className="flex items-center justify-between border-b pb-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
+            <Bell className="h-6 w-6 text-orange-600" /> Notifications
+          </h1>
+          <p className="text-xs text-muted-foreground">Stay updated on new contractor bids, project updates, and payment requests.</p>
+        </div>
+
+        <button
+          onClick={markAllAsRead}
+          className="text-xs font-bold text-orange-600 hover:underline"
+        >
+          Mark all as read
+        </button>
       </div>
 
       <div className="space-y-3">
-        {NOTIFICATIONS.map((n) => (
-          <div key={n.id} className="flex items-start gap-4 p-4 rounded-xl border bg-card shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-600 shrink-0">
-              <Bell className="h-5 w-5" />
+        {notifications.map((n) => (
+          <div
+            key={n.id}
+            className={`rounded-2xl border p-4 transition-all flex items-start gap-4 ${
+              n.unread ? "bg-orange-500/5 border-orange-500/30" : "bg-card"
+            }`}
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 shrink-0 font-bold">
+              {n.type === "new_bid" ? <FileText className="h-5 w-5" /> : n.type === "payment_request" ? <DollarSign className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
             </div>
+
             <div className="flex-1 space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-foreground">{n.title}</span>
-                <span className="text-[10px] text-muted-foreground">{n.time}</span>
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="text-foreground">{n.title}</span>
+                <span className="text-muted-foreground text-[11px] font-normal">{n.time}</span>
               </div>
-              <p className="text-xs text-muted-foreground">{n.desc}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{n.message}</p>
             </div>
           </div>
         ))}

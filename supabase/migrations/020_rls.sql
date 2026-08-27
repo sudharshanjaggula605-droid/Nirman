@@ -62,6 +62,10 @@ CREATE POLICY "Profiles can be updated by owner or Admin"
     ON public.profiles FOR UPDATE
     USING (auth.uid() = id OR public.is_admin());
 
+CREATE POLICY "Users can insert their own profile"
+    ON public.profiles FOR INSERT
+    WITH CHECK (auth.uid() = id OR public.is_admin());
+
 CREATE POLICY "Admin can insert/delete profiles"
     ON public.profiles FOR ALL
     USING (public.is_admin());
@@ -76,6 +80,10 @@ CREATE POLICY "Owners update own profile"
     ON public.owners FOR UPDATE
     USING (auth.uid() = id OR public.is_admin());
 
+CREATE POLICY "Owners insert own profile"
+    ON public.owners FOR INSERT
+    WITH CHECK (auth.uid() = id OR public.is_admin());
+
 CREATE POLICY "Contractors profile viewable publicly"
     ON public.contractors FOR SELECT
     USING (true);
@@ -83,6 +91,10 @@ CREATE POLICY "Contractors profile viewable publicly"
 CREATE POLICY "Contractors update own profile"
     ON public.contractors FOR UPDATE
     USING (auth.uid() = id OR public.is_admin());
+
+CREATE POLICY "Contractors insert own profile"
+    ON public.contractors FOR INSERT
+    WITH CHECK (auth.uid() = id OR public.is_admin());
 
 
 -- 3. Project Categories

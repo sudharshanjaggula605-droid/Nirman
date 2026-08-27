@@ -6,71 +6,11 @@ import Image from "next/image";
 import { HardHat, ShieldCheck, ArrowRight, Building2, TrendingUp, Users, CheckCircle2 } from "lucide-react";
 import { TenderCard } from "@/components/tender-card";
 import { TenderSearch } from "@/components/tender-search";
+import { ContactSection } from "@/components/contact-section";
 import { createClient } from "@/lib/supabase/client";
 
-// Fallback seed tenders if database is currently empty
-const SAMPLE_TENDERS = [
-  {
-    id: "sample-1",
-    title: "Modern Duplex Villa Construction",
-    description: "Looking for an experienced contractor for a 2,400 sq.ft modern duplex villa with premium elevation and smart structural wiring.",
-    budget_min: 3000000,
-    budget_max: 3500000,
-    bid_deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-    status: "active",
-    bids_count: 12,
-    images: [{ image_url: "/tender-residential.jpg" }],
-    project: {
-      city: "Hyderabad",
-      state: "Telangana",
-      property_type: "Villa",
-      area_sqft: 2400,
-      estimated_budget: 3500000,
-      category: { name: "Residential" },
-    },
-  },
-  {
-    id: "sample-2",
-    title: "Commercial IT Office Fit-out & Interior",
-    description: "Complete interior fit-out for 5,000 sq.ft commercial office space including glass partitions, HVAC, and modular workstations.",
-    budget_min: 4500000,
-    budget_max: 5200000,
-    bid_deadline: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
-    status: "active",
-    bids_count: 8,
-    images: [{ image_url: "/tender-commercial.jpg" }],
-    project: {
-      city: "Bengaluru",
-      state: "Karnataka",
-      property_type: "Commercial",
-      area_sqft: 5000,
-      estimated_budget: 5000000,
-      category: { name: "Commercial" },
-    },
-  },
-  {
-    id: "sample-3",
-    title: "Luxury Apartment Complex Renovation",
-    description: "Structural strengthening and external facade facelift for a 4-story luxury residential apartment building.",
-    budget_min: 7500000,
-    budget_max: 8500000,
-    bid_deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-    status: "active",
-    bids_count: 15,
-    images: [{ image_url: "/tender-apartment.jpg" }],
-    project: {
-      city: "Mumbai",
-      state: "Maharashtra",
-      property_type: "Apartment",
-      area_sqft: 8200,
-      estimated_budget: 8000000,
-      category: { name: "Renovation" },
-    },
-  },
-];
-
 export default function HomePage() {
-  const [tenders, setTenders] = useState<any[]>(SAMPLE_TENDERS);
+  const [tenders, setTenders] = useState<any[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
@@ -78,12 +18,20 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [heroImgError, setHeroImgError] = useState(false);
 
+  // Dynamic Live Stats
+  const [liveStats, setLiveStats] = useState({
+    totalTenderValueCr: 0,
+    totalVerifiedContractors: 0,
+    totalBidsSubmitted: 0,
+    activeTendersCount: 0,
+  });
+
   const supabase = createClient();
 
   useEffect(() => {
     async function loadInitialData() {
       try {
-        // Fetch categories
+        // 1. Fetch Categories
         const { data: catData } = await supabase
           .from("project_categories")
           .select("id, name")
@@ -91,19 +39,9 @@ export default function HomePage() {
 
         if (catData && catData.length > 0) {
           setCategories(catData);
-        } else {
-          setCategories([
-            { id: "1", name: "Residential" },
-            { id: "2", name: "Commercial" },
-            { id: "3", name: "Industrial" },
-            { id: "4", name: "Villa" },
-            { id: "5", name: "Apartment" },
-            { id: "6", name: "Renovation" },
-            { id: "7", name: "Interior" },
-          ]);
         }
 
-        // Fetch active tenders from database
+        // 2. Fetch Active Tenders from Database
         const { data: tenderData } = await supabase
           .from("tenders")
           .select(`
@@ -116,15 +54,34 @@ export default function HomePage() {
           .gt("bid_deadline", new Date().toISOString())
           .order("created_at", { ascending: false });
 
-        if (tenderData && tenderData.length > 0) {
+        if (tenderData) {
           const formatted = tenderData.map((t: any) => ({
             ...t,
             bids_count: t.bids?.[0]?.count || 0,
           }));
           setTenders(formatted);
         }
-      } catch {
-        // Fallback to sample tenders
+
+        // 3. Fetch Real Database Statistics
+        const { data: allTenders } = await supabase.from("tenders").select("budget_max");
+        const { count: contractorCount } = await supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "contractor");
+        const { count: bidsCount } = await supabase.from("bids").select("*", { count: "exact", head: true });
+
+        let sumBudget = 0;
+        if (allTenders && allTenders.length > 0) {
+          sumBudget = allTenders.reduce((acc, curr) => acc + (curr.budget_max || 0), 0);
+        }
+
+        const valueInCr = (sumBudget / 10000000).toFixed(1);
+
+        setLiveStats({
+          totalTenderValueCr: parseFloat(valueInCr),
+          totalVerifiedContractors: contractorCount || 0,
+          totalBidsSubmitted: bidsCount || 0,
+          activeTendersCount: tenderData?.length || 0,
+        });
+      } catch (err) {
+        console.error("Error loading landing page stats from database:", err);
       } finally {
         setLoading(false);
       }
@@ -138,7 +95,7 @@ export default function HomePage() {
     const titleMatch = t.title?.toLowerCase().includes(searchQuery.toLowerCase());
     const cityMatch = t.project?.city?.toLowerCase().includes(searchQuery.toLowerCase());
     const stateMatch = t.project?.state?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSearch = titleMatch || cityMatch || stateMatch;
+    const matchesSearch = !searchQuery || titleMatch || cityMatch || stateMatch;
 
     const matchesCategory =
       selectedCategory === "ALL" || t.project?.category?.name === selectedCategory;
@@ -199,19 +156,19 @@ export default function HomePage() {
                 </a>
               </div>
 
-              {/* Trust Indicators */}
+              {/* Dynamic Live Database Trust Indicators */}
               <div className="pt-6 grid grid-cols-3 gap-4 border-t border-muted/60 max-w-lg mx-auto lg:mx-0 text-left">
                 <div>
                   <div className="text-xl font-bold text-foreground">100%</div>
                   <div className="text-xs text-muted-foreground">Admin Verified</div>
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-orange-600">₹50Cr+</div>
-                  <div className="text-xs text-muted-foreground">Tender Value</div>
+                  <div className="text-xl font-bold text-orange-600">₹{liveStats.totalTenderValueCr}Cr</div>
+                  <div className="text-xs text-muted-foreground">Live Tender Value</div>
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-foreground">0%</div>
-                  <div className="text-xs text-muted-foreground">Worker Middlemen</div>
+                  <div className="text-xl font-bold text-foreground">{liveStats.totalVerifiedContractors}</div>
+                  <div className="text-xs text-muted-foreground">Licensed Contractors</div>
                 </div>
               </div>
             </div>
@@ -242,11 +199,11 @@ export default function HomePage() {
                   
                   <div className="absolute bottom-4 left-4 right-4 p-4 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 text-white space-y-1 z-10">
                     <div className="flex items-center justify-between text-xs font-semibold text-orange-400">
-                      <span>Live Tender Activity</span>
+                      <span>Live Marketplace Activity</span>
                       <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
                     </div>
-                    <div className="font-bold text-sm">Residential Duplex & Commercial Projects</div>
-                    <p className="text-[11px] text-slate-300">Contractors submitting transparent BOQ bids daily.</p>
+                    <div className="font-bold text-sm">Real-time Construction Tenders</div>
+                    <p className="text-[11px] text-slate-300">Contractors submitting transparent BOQ bids directly.</p>
                   </div>
                 </div>
               </div>
@@ -299,12 +256,20 @@ export default function HomePage() {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed p-12 text-center space-y-3">
+          <div className="rounded-2xl border border-dashed p-12 text-center space-y-3 bg-muted/20">
             <HardHat className="h-10 w-10 text-muted-foreground mx-auto" />
-            <h3 className="font-bold text-base text-foreground">No active tenders found</h3>
+            <h3 className="font-bold text-base text-foreground">No active tenders in database yet</h3>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-              Try adjusting your search criteria or category filter to discover more tenders.
+              Property owners can post a project to publish live tenders instantly for contractors.
             </p>
+            <div className="pt-2">
+              <Link
+                href="/register?role=owner"
+                className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700"
+              >
+                Post Your First Tender
+              </Link>
+            </div>
           </div>
         )}
       </section>
@@ -364,6 +329,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Contact Us Section */}
+      <ContactSection />
     </div>
   );
 }

@@ -1,46 +1,120 @@
 "use client";
 
-import { useState } from "react";
-import { Send, Building2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Send, Building2, User } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { sendMessageAction } from "@/actions/messages";
 
 export default function OwnerMessagesPage() {
-  const [messages, setMessages] = useState([
-    { id: 1, sender: "BuildPro Constructions (Contractor)", text: "Good morning sir! Roof slab casting is scheduled for tomorrow 8 AM.", time: "09:15 AM", isSelf: false },
-    { id: 2, sender: "You", text: "Great! I will visit the site at 11 AM to inspect the reinforcement steel.", time: "09:20 AM", isSelf: true },
-  ]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [contractorPartner, setContractorPartner] = useState<any>(null);
 
-  const handleSend = (e: React.FormEvent) => {
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadMessages() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        setCurrentUserId(user.id);
+
+        // Fetch messages where user is sender or receiver
+        const { data: chatData } = await supabase
+          .from("messages")
+          .select("*")
+          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+          .order("created_at", { ascending: true });
+
+        if (chatData) {
+          setMessages(chatData);
+        }
+
+        // Fetch contractor profile to chat with
+        const { data: contractorProf } = await supabase
+          .from("profiles")
+          .select("*, contractor:contractors(*)")
+          .eq("role", "contractor")
+          .limit(1)
+          .single();
+
+        if (contractorProf) {
+          setContractorPartner(contractorProf);
+        }
+      } catch (err) {
+        console.error("Error loading chat messages:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadMessages();
+  }, []);
+
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
-    setMessages([...messages, { id: Date.now(), sender: "You", text: input, time: "Just now", isSelf: true }]);
+    if (!input.trim() || !contractorPartner?.id) return;
+
+    const textToSend = input;
     setInput("");
+
+    // Optimistic UI update
+    const tempMsg = {
+      id: Date.now().toString(),
+      sender_id: currentUserId,
+      receiver_id: contractorPartner.id,
+      content: textToSend,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, tempMsg]);
+
+    const res = await sendMessageAction(contractorPartner.id, textToSend);
+    if (res?.error) {
+      console.error("Failed to send message:", res.error);
+    }
   };
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col rounded-2xl border bg-card overflow-hidden shadow-sm">
       <div className="flex items-center justify-between px-6 py-4 border-b bg-muted/30">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-600 text-white font-bold text-xs">
-            BC
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-600 text-white font-bold text-xs uppercase">
+            {contractorPartner?.full_name?.substring(0, 2) || "CP"}
           </div>
           <div>
-            <h3 className="font-bold text-sm text-foreground">BuildPro Constructions Pvt Ltd</h3>
-            <p className="text-[11px] text-muted-foreground">Contractor • Modern Duplex Villa Project</p>
+            <h3 className="font-bold text-sm text-foreground">
+              {contractorPartner?.contractor?.company_name || contractorPartner?.full_name || "Contractor Partner"}
+            </h3>
+            <p className="text-[11px] text-muted-foreground">Contractor • Live Project Direct Chat</p>
           </div>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {messages.map((m) => (
-          <div key={m.id} className={`flex flex-col ${m.isSelf ? "items-end" : "items-start"}`}>
-            <div className={`max-w-md rounded-2xl p-4 text-xs space-y-1 shadow-sm ${m.isSelf ? "bg-orange-600 text-white" : "bg-muted text-foreground border"}`}>
-              <div className="font-semibold text-[10px] opacity-80">{m.sender}</div>
-              <p className="leading-relaxed">{m.text}</p>
-            </div>
-            <span className="text-[9px] text-muted-foreground mt-1 px-1">{m.time}</span>
+        {messages.length > 0 ? (
+          messages.map((m) => {
+            const isSelf = m.sender_id === currentUserId;
+            return (
+              <div key={m.id} className={`flex flex-col ${isSelf ? "items-end" : "items-start"}`}>
+                <div className={`max-w-md rounded-2xl p-4 text-xs space-y-1 shadow-sm ${isSelf ? "bg-orange-600 text-white" : "bg-muted text-foreground border"}`}>
+                  <div className="font-semibold text-[10px] opacity-80">{isSelf ? "You" : contractorPartner?.full_name || "Contractor"}</div>
+                  <p className="leading-relaxed">{m.content}</p>
+                </div>
+                <span className="text-[9px] text-muted-foreground mt-1 px-1">
+                  {new Date(m.created_at || Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+            );
+          })
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center text-center space-y-2 text-muted-foreground">
+            <User className="h-8 w-8 text-muted-foreground" />
+            <div className="text-xs font-bold text-foreground">No Chat History</div>
+            <p className="text-[11px]">Send a message to start direct communication with the contractor.</p>
           </div>
-        ))}
+        )}
       </div>
 
       <form onSubmit={handleSend} className="p-4 border-t flex items-center gap-2 bg-card">

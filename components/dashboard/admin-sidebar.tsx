@@ -1,46 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
   UserCheck,
-  Building2,
-  Home,
-  FileText,
-  Gavel,
   ShieldCheck,
-  CreditCard,
-  Folder,
+  FileText,
+  Building2,
+  Gavel,
+  HelpCircle,
   BarChart3,
-  Bell,
-  AlertOctagon,
-  History,
   Settings,
   LogOut,
   Shield,
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 
 const ADMIN_NAV = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Approvals & Verifications", href: "/admin/approvals", icon: ShieldCheck },
-  { label: "Property Owners", href: "/admin/users/owners", icon: Users },
-  { label: "Contractors", href: "/admin/users/contractors", icon: UserCheck },
-  { label: "Properties", href: "/admin/properties", icon: Home },
-  { label: "Projects", href: "/admin/projects", icon: Building2 },
-  { label: "Tenders", href: "/admin/tenders", icon: FileText },
-  { label: "Bids", href: "/admin/bids", icon: Gavel },
-  { label: "Contracts", href: "/admin/contracts", icon: Shield },
-  { label: "Payments", href: "/admin/payments", icon: CreditCard },
-  { label: "Documents", href: "/admin/documents", icon: Folder },
-  { label: "Reports", href: "/admin/reports", icon: BarChart3 },
-  { label: "Notifications", href: "/admin/notifications", icon: Bell },
-  { label: "Complaints", href: "/admin/complaints", icon: AlertOctagon },
-  { label: "Audit Logs", href: "/admin/audit-logs", icon: History },
+  { label: "Support Requests", href: "/admin/support", icon: HelpCircle },
+  { label: "Owner Approvals", href: "/admin/owners", icon: ShieldCheck },
+  { label: "Contractor Approvals", href: "/admin/contractors", icon: UserCheck },
+  { label: "Users Management", href: "/admin/users", icon: Users },
+  { label: "Tender Management", href: "/admin/tenders", icon: FileText },
+  { label: "Project Management", href: "/admin/projects", icon: Building2 },
+  { label: "Bids Monitoring", href: "/admin/bids", icon: Gavel },
+  { label: "Reports & Analytics", href: "/admin/reports", icon: BarChart3 },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -67,13 +55,17 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
       } flex flex-col justify-between`}
     >
       <div className="flex flex-col h-full overflow-y-auto">
-        {/* Sidebar Header */}
+        {/* Sidebar Header - Clickable Logo & Text redirecting to Home / Landing Page */}
         <div className="flex h-16 items-center justify-between px-6 border-b border-slate-800">
-          <Link href="/admin/dashboard" className="flex items-center gap-2 font-bold text-lg">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-600 text-white shadow-md">
+          <Link
+            href="/"
+            title="Return to Main NIRMAN Landing Page"
+            className="flex items-center gap-2 font-bold text-lg group hover:opacity-85 transition-all cursor-pointer"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-600 text-white shadow-md group-hover:scale-105 transition-transform">
               <Shield className="h-4 w-4" />
             </div>
-            <span className="tracking-tight text-white">NIRMAN</span>
+            <span className="tracking-tight text-white group-hover:text-amber-400 transition-colors">NIRMAN</span>
             <span className="text-[10px] uppercase font-extrabold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">
               Admin
             </span>

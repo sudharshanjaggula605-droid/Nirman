@@ -1,55 +1,126 @@
 "use client";
 
-import { useState } from "react";
-import { Send, Paperclip, Image as ImageIcon, User, Building2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Send, Building2, User } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { sendMessageAction } from "@/actions/messages";
 
 export default function ContractorMessagesPage() {
-  const [messages, setMessages] = useState([
-    { id: 1, sender: "Rajesh Kumar (Owner)", text: "Hi, please confirm if the first floor slab casting is completed?", time: "10:30 AM", isSelf: false },
-    { id: 2, sender: "You", text: "Yes sir, slab casting was completed yesterday evening. Curing is underway.", time: "10:35 AM", isSelf: true },
-  ]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [ownerPartner, setOwnerPartner] = useState<any>(null);
 
-  const handleSend = (e: React.FormEvent) => {
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadMessages() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        setCurrentUserId(user.id);
+
+        // Fetch messages where user is sender or receiver
+        const { data: chatData } = await supabase
+          .from("messages")
+          .select("*")
+          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+          .order("created_at", { ascending: true });
+
+        if (chatData) {
+          setMessages(chatData);
+        }
+
+        // Fetch owner profile to chat with
+        const { data: ownerProf } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("role", "owner")
+          .limit(1)
+          .single();
+
+        if (ownerProf) {
+          setOwnerPartner(ownerProf);
+        }
+      } catch (err) {
+        console.error("Error loading contractor chat messages:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadMessages();
+  }, []);
+
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
-    setMessages([...messages, { id: Date.now(), sender: "You", text: input, time: "Just now", isSelf: true }]);
+    if (!input.trim() || !ownerPartner?.id) return;
+
+    const textToSend = input;
     setInput("");
+
+    // Optimistic UI update
+    const tempMsg = {
+      id: Date.now().toString(),
+      sender_id: currentUserId,
+      receiver_id: ownerPartner.id,
+      content: textToSend,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, tempMsg]);
+
+    const res = await sendMessageAction(ownerPartner.id, textToSend);
+    if (res?.error) {
+      console.error("Failed to send message:", res.error);
+    }
   };
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col rounded-2xl border bg-card overflow-hidden shadow-sm">
-      {/* Chat Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b bg-muted/30">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-600 text-white font-bold text-xs">
-            RK
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-600 text-white font-bold text-xs uppercase">
+            {ownerPartner?.full_name?.substring(0, 2) || "PO"}
           </div>
           <div>
-            <h3 className="font-bold text-sm text-foreground">Rajesh Kumar (Property Owner)</h3>
-            <p className="text-[11px] text-muted-foreground">Project: Modern Duplex Villa Construction</p>
+            <h3 className="font-bold text-sm text-foreground">
+              {ownerPartner?.full_name || "Property Owner"}
+            </h3>
+            <p className="text-[11px] text-muted-foreground">Property Owner • Direct Tender Chat</p>
           </div>
         </div>
       </div>
 
-      {/* Messages Stream */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {messages.map((m) => (
-          <div key={m.id} className={`flex flex-col ${m.isSelf ? "items-end" : "items-start"}`}>
-            <div className={`max-w-md rounded-2xl p-4 text-xs space-y-1 shadow-sm ${m.isSelf ? "bg-orange-600 text-white" : "bg-muted text-foreground border"}`}>
-              <div className="font-semibold text-[10px] opacity-80">{m.sender}</div>
-              <p className="leading-relaxed">{m.text}</p>
-            </div>
-            <span className="text-[9px] text-muted-foreground mt-1 px-1">{m.time}</span>
+        {messages.length > 0 ? (
+          messages.map((m) => {
+            const isSelf = m.sender_id === currentUserId;
+            return (
+              <div key={m.id} className={`flex flex-col ${isSelf ? "items-end" : "items-start"}`}>
+                <div className={`max-w-md rounded-2xl p-4 text-xs space-y-1 shadow-sm ${isSelf ? "bg-orange-600 text-white" : "bg-muted text-foreground border"}`}>
+                  <div className="font-semibold text-[10px] opacity-80">{isSelf ? "You" : ownerPartner?.full_name || "Owner"}</div>
+                  <p className="leading-relaxed">{m.content}</p>
+                </div>
+                <span className="text-[9px] text-muted-foreground mt-1 px-1">
+                  {new Date(m.created_at || Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+            );
+          })
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center text-center space-y-2 text-muted-foreground">
+            <User className="h-8 w-8 text-muted-foreground" />
+            <div className="text-xs font-bold text-foreground">No Messages Yet</div>
+            <p className="text-[11px]">Send a message to start direct communication with property owners.</p>
           </div>
-        ))}
+        )}
       </div>
 
-      {/* Input Form */}
       <form onSubmit={handleSend} className="p-4 border-t flex items-center gap-2 bg-card">
         <input
           type="text"
-          placeholder="Type your message to property owner..."
+          placeholder="Write message to property owner..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           className="flex-1 rounded-xl border bg-background px-4 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"

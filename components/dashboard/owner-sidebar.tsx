@@ -1,21 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  Home,
   Building2,
-  PlusCircle,
   FileText,
   Users,
-  Clock,
-  Flag,
-  CreditCard,
-  Folder,
   MessageSquare,
-  Bell,
-  BarChart3,
+  CreditCard,
+  Star,
+  Folder,
   User,
   Settings,
   LogOut,
@@ -23,22 +18,16 @@ import {
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 
 const OWNER_NAV = [
   { label: "Dashboard", href: "/owner/dashboard", icon: LayoutDashboard },
-  { label: "My Properties", href: "/owner/properties", icon: Home },
-  { label: "Projects", href: "/owner/projects", icon: Building2 },
-  { label: "Create Project", href: "/owner/projects/new", icon: PlusCircle },
-  { label: "Tenders", href: "/owner/tenders", icon: FileText },
-  { label: "Contractor Bids", href: "/owner/bids", icon: Users },
-  { label: "Active Projects", href: "/owner/projects/active", icon: Clock },
-  { label: "Milestones", href: "/owner/milestones", icon: Flag },
-  { label: "Payments", href: "/owner/payments", icon: CreditCard },
-  { label: "Documents", href: "/owner/documents", icon: Folder },
+  { label: "My Projects", href: "/owner/projects", icon: Building2 },
+  { label: "My Tenders", href: "/owner/tenders", icon: FileText },
+  { label: "Received Bids", href: "/owner/bids", icon: Users },
   { label: "Messages", href: "/owner/messages", icon: MessageSquare },
-  { label: "Notifications", href: "/owner/notifications", icon: Bell },
-  { label: "Reports", href: "/owner/reports", icon: BarChart3 },
+  { label: "Payments", href: "/owner/payments", icon: CreditCard },
+  { label: "Reviews", href: "/owner/reviews", icon: Star },
+  { label: "Documents", href: "/owner/documents", icon: Folder },
   { label: "Profile", href: "/owner/profile", icon: User },
   { label: "Settings", href: "/owner/settings", icon: Settings },
 ];
@@ -66,14 +55,18 @@ export function OwnerSidebar({ open, onClose }: OwnerSidebarProps) {
       } flex flex-col justify-between`}
     >
       <div className="flex flex-col h-full overflow-y-auto">
-        {/* Sidebar Header */}
+        {/* Sidebar Header - Clickable Logo & Text redirecting to Home / Landing Page */}
         <div className="flex h-16 items-center justify-between px-6 border-b">
-          <Link href="/owner/dashboard" className="flex items-center gap-2 font-bold text-lg">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600 text-white shadow-md">
+          <Link
+            href="/"
+            title="Return to Main NIRMAN Landing Page"
+            className="flex items-center gap-2 font-bold text-lg group hover:opacity-85 transition-all cursor-pointer"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600 text-white shadow-md group-hover:scale-105 transition-transform">
               <HardHat className="h-4 w-4" />
             </div>
-            <span className="tracking-tight text-foreground">NIRMAN</span>
-            <span className="text-[10px] uppercase font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
+            <span className="tracking-tight text-foreground group-hover:text-orange-600 transition-colors">NIRMAN</span>
+            <span className="text-[10px] uppercase font-bold text-orange-600 bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/20">
               Owner
             </span>
           </Link>

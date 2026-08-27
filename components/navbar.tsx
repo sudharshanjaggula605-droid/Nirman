@@ -80,6 +80,12 @@ export function Navbar() {
           >
             How It Works
           </Link>
+          <Link
+            href="/#contact"
+            className="text-muted-foreground transition-colors hover:text-orange-600"
+          >
+            Contact Us
+          </Link>
 
           {user && profile && (
             <Link

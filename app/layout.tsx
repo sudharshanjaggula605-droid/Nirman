@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
+import { ClientLayoutWrapper } from "@/components/client-layout-wrapper";
 
 export const metadata: Metadata = {
   title: "NIRMAN | Construction Tender Marketplace & Contractor Management",
@@ -18,9 +17,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen flex flex-col bg-background text-foreground antialiased font-sans">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
         </ThemeProvider>
       </body>
     </html>

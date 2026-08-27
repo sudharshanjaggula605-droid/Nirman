@@ -631,16 +631,37 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_profiles_updated_at ON public.profiles;
 CREATE TRIGGER trg_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_owners_updated_at ON public.owners;
 CREATE TRIGGER trg_owners_updated_at BEFORE UPDATE ON public.owners FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_contractors_updated_at ON public.contractors;
 CREATE TRIGGER trg_contractors_updated_at BEFORE UPDATE ON public.contractors FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_projects_updated_at ON public.projects;
 CREATE TRIGGER trg_projects_updated_at BEFORE UPDATE ON public.projects FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_tenders_updated_at ON public.tenders;
 CREATE TRIGGER trg_tenders_updated_at BEFORE UPDATE ON public.tenders FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_bids_updated_at ON public.bids;
 CREATE TRIGGER trg_bids_updated_at BEFORE UPDATE ON public.bids FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_bid_cost_breakdowns_updated_at ON public.bid_cost_breakdowns;
 CREATE TRIGGER trg_bid_cost_breakdowns_updated_at BEFORE UPDATE ON public.bid_cost_breakdowns FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_project_milestones_updated_at ON public.project_milestones;
 CREATE TRIGGER trg_project_milestones_updated_at BEFORE UPDATE ON public.project_milestones FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_payments_updated_at ON public.payments;
 CREATE TRIGGER trg_payments_updated_at BEFORE UPDATE ON public.payments FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_reviews_updated_at ON public.reviews;
 CREATE TRIGGER trg_reviews_updated_at BEFORE UPDATE ON public.reviews FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS trg_conversations_updated_at ON public.conversations;
 CREATE TRIGGER trg_conversations_updated_at BEFORE UPDATE ON public.conversations FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -649,21 +670,29 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-    v_role user_role;
+    v_role_str TEXT;
+    v_role user_role := 'owner'::user_role;
+    v_status account_status := 'pending'::account_status;
     v_full_name TEXT;
     v_phone TEXT;
     v_company_name TEXT;
     v_contact_person TEXT;
 BEGIN
-    v_role := COALESCE((NEW.raw_user_meta_data->>'role')::user_role, 'owner');
+    v_role_str := LOWER(COALESCE(NEW.raw_user_meta_data->>'role', 'owner'));
+    
+    IF v_role_str = 'contractor' THEN
+        v_role := 'contractor'::user_role;
+    ELSIF v_role_str = 'admin' THEN
+        v_role := 'admin'::user_role;
+        v_status := 'approved'::account_status;
+    ELSE
+        v_role := 'owner'::user_role;
+    END IF;
+
     v_full_name := COALESCE(NEW.raw_user_meta_data->>'full_name', 'User ' || substring(NEW.id::text, 1, 8));
     v_phone := NEW.raw_user_meta_data->>'phone';
     v_company_name := NEW.raw_user_meta_data->>'company_name';
     v_contact_person := COALESCE(NEW.raw_user_meta_data->>'contact_person', v_full_name);
-
-    IF NEW.email ILIKE '%admin%' THEN
-        v_role := 'admin';
-    END IF;
 
     INSERT INTO public.profiles (
         id,
@@ -678,10 +707,10 @@ BEGIN
         NEW.email,
         v_phone,
         v_role,
-        CASE WHEN v_role = 'admin' THEN 'approved'::account_status ELSE 'pending'::account_status END
+        v_status
     ) ON CONFLICT (id) DO UPDATE SET
-        role = EXCLUDED.role,
-        status = CASE WHEN EXCLUDED.role = 'admin' THEN 'approved'::account_status ELSE public.profiles.status END;
+        full_name = EXCLUDED.full_name,
+        email = EXCLUDED.email;
 
     IF v_role = 'owner' THEN
         INSERT INTO public.owners (
@@ -713,6 +742,8 @@ BEGIN
     END IF;
 
     RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+    RETURN NEW;
 END;
 $$;
 
@@ -721,6 +752,7 @@ CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
+DROP TRIGGER IF EXISTS trg_reviews_recalculate_rating ON public.reviews;
 CREATE TRIGGER trg_reviews_recalculate_rating
     AFTER INSERT OR UPDATE OR DELETE ON public.reviews
     FOR EACH ROW EXECUTE FUNCTION public.recalculate_contractor_rating();
@@ -917,4 +949,55 @@ VALUES (
 ON CONFLICT (id) DO UPDATE SET
   role = 'admin',
   status = 'approved';
+
+-- ============================================================================
+-- 023. SUPPORT REQUESTS & STORAGE
+-- ============================================================================
+CREATE SEQUENCE IF NOT EXISTS public.support_request_seq START WITH 1001;
+
+CREATE TABLE IF NOT EXISTS public.support_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NULL REFERENCES public.profiles(id) ON DELETE SET NULL,
+    request_number TEXT UNIQUE NOT NULL DEFAULT ('NIR-' || nextval('public.support_request_seq')),
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT NULL,
+    user_type TEXT NOT NULL,
+    issue_type TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    message TEXT NOT NULL,
+    attachment_url TEXT NULL,
+    status TEXT NOT NULL DEFAULT 'open',
+    admin_response TEXT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_support_requests_status ON public.support_requests(status);
+CREATE INDEX IF NOT EXISTS idx_support_requests_user_id ON public.support_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_support_requests_user_type ON public.support_requests(user_type);
+CREATE INDEX IF NOT EXISTS idx_support_requests_issue_type ON public.support_requests(issue_type);
+
+ALTER TABLE public.support_requests ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public insert to support_requests" ON public.support_requests;
+CREATE POLICY "Allow public insert to support_requests" ON public.support_requests FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow admin select all support_requests" ON public.support_requests;
+CREATE POLICY "Allow admin select all support_requests" ON public.support_requests FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+DROP POLICY IF EXISTS "Allow admin update support_requests" ON public.support_requests;
+CREATE POLICY "Allow admin update support_requests" ON public.support_requests FOR UPDATE USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+DROP POLICY IF EXISTS "Allow users to view own support_requests" ON public.support_requests;
+CREATE POLICY "Allow users to view own support_requests" ON public.support_requests FOR SELECT USING (
+  user_id IS NOT NULL AND user_id = auth.uid()
+);
+
+INSERT INTO storage.buckets (id, name, public) VALUES ('support-attachments', 'support-attachments', true) ON CONFLICT (id) DO NOTHING;
+
 

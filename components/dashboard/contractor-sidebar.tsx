@@ -1,18 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Search,
   FileText,
   Building2,
   CheckCircle,
-  Flag,
-  CreditCard,
-  Folder,
   MessageSquare,
-  Bell,
+  CreditCard,
+  Briefcase,
+  Star,
   User,
   Settings,
   LogOut,
@@ -20,19 +19,17 @@ import {
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 
 const CONTRACTOR_NAV = [
   { label: "Dashboard", href: "/contractor/dashboard", icon: LayoutDashboard },
-  { label: "Browse Projects", href: "/contractor/tenders", icon: Search },
+  { label: "Find Tenders", href: "/contractor/tenders", icon: Search },
   { label: "My Bids", href: "/contractor/bids", icon: FileText },
-  { label: "Active Projects", href: "/contractor/projects/active", icon: Building2 },
-  { label: "Completed Projects", href: "/contractor/projects/completed", icon: CheckCircle },
-  { label: "Milestones", href: "/contractor/milestones", icon: Flag },
-  { label: "Payments", href: "/contractor/payments", icon: CreditCard },
-  { label: "Documents", href: "/contractor/documents", icon: Folder },
+  { label: "Active Projects", href: "/contractor/projects", icon: Building2 },
+  { label: "Completed Projects", href: "/contractor/projects?status=completed", icon: CheckCircle },
   { label: "Messages", href: "/contractor/messages", icon: MessageSquare },
-  { label: "Notifications", href: "/contractor/notifications", icon: Bell },
+  { label: "Payments", href: "/contractor/payments", icon: CreditCard },
+  { label: "Portfolio", href: "/contractor/portfolio", icon: Briefcase },
+  { label: "Reviews", href: "/contractor/reviews", icon: Star },
   { label: "Profile", href: "/contractor/profile", icon: User },
   { label: "Settings", href: "/contractor/settings", icon: Settings },
 ];
@@ -60,14 +57,18 @@ export function ContractorSidebar({ open, onClose }: ContractorSidebarProps) {
       } flex flex-col justify-between`}
     >
       <div className="flex flex-col h-full overflow-y-auto">
-        {/* Sidebar Header */}
+        {/* Sidebar Header - Clickable Logo & Text redirecting to Home / Landing Page */}
         <div className="flex h-16 items-center justify-between px-6 border-b">
-          <Link href="/contractor/dashboard" className="flex items-center gap-2 font-bold text-lg">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600 text-white shadow-md">
+          <Link
+            href="/"
+            title="Return to Main NIRMAN Landing Page"
+            className="flex items-center gap-2 font-bold text-lg group hover:opacity-85 transition-all cursor-pointer"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600 text-white shadow-md group-hover:scale-105 transition-transform">
               <HardHat className="h-4 w-4" />
             </div>
-            <span className="tracking-tight text-foreground">NIRMAN</span>
-            <span className="text-[10px] uppercase font-bold text-orange-500 bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/20">
+            <span className="tracking-tight text-foreground group-hover:text-orange-600 transition-colors">NIRMAN</span>
+            <span className="text-[10px] uppercase font-bold text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
               Contractor
             </span>
           </Link>
@@ -82,10 +83,12 @@ export function ContractorSidebar({ open, onClose }: ContractorSidebarProps) {
         <div className="px-3 py-4 space-y-1 flex-1">
           {CONTRACTOR_NAV.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/contractor/dashboard" && pathname.startsWith(item.href.split("?")[0]));
             return (
               <Link
-                key={item.href}
+                key={item.label}
                 href={item.href}
                 onClick={onClose}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all ${

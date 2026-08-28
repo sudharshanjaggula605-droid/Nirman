@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import AccountPendingPage from "../account-pending/page";
 
 export default function ApprovalWaitingPage() {
-  redirect("/account-pending");
+  return <AccountPendingPage />;
 }

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Search, Bell, MessageSquare, Menu, Sun, Moon, CheckCircle2, Clock } from "lucide-react";
 import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
+import { getUnreadMessageCountAction } from "@/actions/messages";
+import { getUnreadNotificationCountAction } from "@/actions/notifications";
 
 interface DashboardHeaderProps {
   onMenuToggle?: () => void;
@@ -17,6 +19,7 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const supabase = createClient();
 
   useEffect(() => {
@@ -31,31 +34,76 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
           .eq("id", currentUser.id)
           .single();
         setProfile(userProfile);
-
-        // Fetch unread notifications count from database
-        const { count: notifCount } = await supabase
-          .from("notifications")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", currentUser.id)
-          .eq("is_read", false);
-
-        let totalUnread = notifCount || 0;
-
-        if (userProfile?.role === "admin") {
-          const { count: openSupportCount } = await supabase
-            .from("support_requests")
-            .select("*", { count: "exact", head: true })
-            .eq("status", "open");
-
-          if (openSupportCount) {
-            totalUnread = Math.max(totalUnread, openSupportCount);
-          }
-        }
-
-        setUnreadNotifs(totalUnread);
       }
     }
     loadUser();
+  }, []);
+
+  // Live Unread Notification Count Listener & Poller
+  useEffect(() => {
+    async function updateUnreadNotifCount() {
+      const res = await getUnreadNotificationCountAction();
+      setUnreadNotifs(res.count || 0);
+    }
+
+    updateUnreadNotifCount();
+
+    const interval = setInterval(() => {
+      updateUnreadNotifCount();
+    }, 3000);
+
+    const channel = supabase
+      .channel(`header_notif_unread_${Date.now()}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notifications" },
+        () => {
+          updateUnreadNotifCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Live Unread Chat Count Listener & Poller
+  useEffect(() => {
+    async function updateUnreadChatCount() {
+      const res = await getUnreadMessageCountAction();
+      setUnreadChatCount(res.count || 0);
+    }
+
+    updateUnreadChatCount();
+
+    const handleReadEvent = () => {
+      updateUnreadChatCount();
+    };
+
+    window.addEventListener("chat_read_updated", handleReadEvent);
+
+    const interval = setInterval(() => {
+      updateUnreadChatCount();
+    }, 3000);
+
+    const channel = supabase
+      .channel(`header_chat_unread_${Date.now()}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "messages" },
+        () => {
+          updateUnreadChatCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      window.removeEventListener("chat_read_updated", handleReadEvent);
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const getStatusBadge = () => {
@@ -82,7 +130,7 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
 
   const getMessagesLink = () => {
     if (profile?.role === "contractor") return "/contractor/messages";
-    if (profile?.role === "admin") return "/admin/dashboard";
+    if (profile?.role === "admin") return "/admin/messages";
     return "/owner/messages";
   };
 
@@ -116,8 +164,14 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
         <Link
           href={getMessagesLink()}
           className="relative p-2 rounded-xl border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          title="Direct User Messages & Chat"
         >
           <MessageSquare className="h-4 w-4" />
+          {unreadChatCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] px-1 items-center justify-center rounded-full bg-orange-600 text-[10px] font-extrabold leading-none text-white shadow-sm ring-2 ring-background animate-pulse">
+              {unreadChatCount > 99 ? "99+" : unreadChatCount}
+            </span>
+          )}
         </Link>
 
         {/* Notifications */}

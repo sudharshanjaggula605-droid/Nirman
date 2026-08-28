@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import AccountBlockedPage from "../account-blocked/page";
 
 export default function BlockedPage() {
-  redirect("/account-blocked");
+  return <AccountBlockedPage />;
 }

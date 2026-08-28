@@ -16,8 +16,10 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { getTimeBasedGreeting } from "@/lib/utils";
 
 export default function AdminDashboardPage() {
+  const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState({
     totalOwners: 0,
     totalContractors: 0,
@@ -39,6 +41,12 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function loadAdminData() {
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: myProf } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+          setProfile(myProf);
+        }
+
         const { data: profiles } = await supabase.from("profiles").select("*");
         const { count: tendersCount } = await supabase.from("tenders").select("*", { count: "exact", head: true }).eq("status", "active");
         const { count: activeProjCount } = await supabase.from("projects").select("*", { count: "exact", head: true }).eq("status", "active");
@@ -100,7 +108,7 @@ export default function AdminDashboardPage() {
               <Shield className="h-3.5 w-3.5" /> Platform Governance Console
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              NIRMAN Admin Dashboard
+              {getTimeBasedGreeting(profile?.full_name, "Admin Console")}
             </h1>
             <p className="text-xs sm:text-sm text-slate-400">
               Real-time platform health metrics, pending user verification approvals, and active tender monitoring.

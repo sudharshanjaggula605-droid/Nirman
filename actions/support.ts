@@ -94,6 +94,30 @@ export async function submitSupportRequestAction(
 
     const request_number = inserted?.request_number || "NIR-1001";
 
+    // Insert into messages table as well so it appears in the chat option!
+    if (user_id) {
+      try {
+        const { data: adminProfiles } = await adminClient
+          .from("profiles")
+          .select("id")
+          .eq("role", "admin")
+          .limit(1);
+
+        const adminId = adminProfiles?.[0]?.id || "5b7ec4ee-e9e8-43a1-ba7e-56bfc3f71c05";
+
+        await adminClient.from("messages").insert({
+          sender_id: user_id,
+          receiver_id: adminId,
+          content: `[SUPPORT COMPLAINT ${request_number}] ${issue_type} - ${subject}\n\n${message}`,
+          image_url: attachment_url || null,
+          attachment_url: attachment_url || null,
+          read: false,
+        });
+      } catch (chatMsgErr) {
+        console.error("Failed to post support request into chat messages:", chatMsgErr);
+      }
+    }
+
     // Notify all admin users via notifications table
     try {
       const { data: adminProfiles } = await adminClient

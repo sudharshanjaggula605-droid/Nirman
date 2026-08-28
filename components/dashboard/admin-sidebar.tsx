@@ -16,11 +16,13 @@ import {
   LogOut,
   Shield,
   X,
+  MessageSquare,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const ADMIN_NAV = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "Direct User Messages", href: "/admin/messages", icon: MessageSquare },
   { label: "Support Requests", href: "/admin/support", icon: HelpCircle },
   { label: "Owner Approvals", href: "/admin/owners", icon: ShieldCheck },
   { label: "Contractor Approvals", href: "/admin/contractors", icon: UserCheck },

@@ -4,8 +4,18 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ClientLayoutWrapper } from "@/components/client-layout-wrapper";
 
 export const metadata: Metadata = {
-  title: "NIRMAN | Construction Tender Marketplace & Contractor Management",
-  description: "Connect with verified property owners and licensed construction contractors across India. Transparent tenders, side-by-side bid comparison, milestone progress tracking.",
+  title: {
+    default: "NIRMAN",
+    template: "%s | NIRMAN",
+  },
+  description: "NIRMAN | Construction Tender Marketplace & Contractor Management Platform",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -15,6 +25,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="shortcut icon" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/favicon.svg" />
+      </head>
       <body className="min-h-screen flex flex-col bg-background text-foreground antialiased font-sans">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <ClientLayoutWrapper>{children}</ClientLayoutWrapper>

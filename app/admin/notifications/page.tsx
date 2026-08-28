@@ -21,6 +21,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { markNotificationsAsReadAction } from "@/actions/notifications";
 
 interface AdminNotificationItem {
   id: string;
@@ -118,6 +119,7 @@ export default function AdminNotificationsPage() {
 
   useEffect(() => {
     fetchAdminNotifications();
+    markNotificationsAsReadAction();
   }, []);
 
   const markAllAsRead = async () => {

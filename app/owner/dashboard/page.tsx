@@ -17,6 +17,7 @@ import {
   Eye,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { getTimeBasedGreeting } from "@/lib/utils";
 
 export default function OwnerDashboardPage() {
   const [profile, setProfile] = useState<any>(null);
@@ -97,7 +98,7 @@ export default function OwnerDashboardPage() {
               <Sparkles className="h-3.5 w-3.5" /> Owner Workspace
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              Good morning, {profile?.full_name || "Property Owner"} 👋
+              {getTimeBasedGreeting(profile?.full_name, "Property Owner")}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground">
               Here's a live overview of your construction projects, tenders, and contractor bids.

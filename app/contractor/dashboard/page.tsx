@@ -14,6 +14,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { getTimeBasedGreeting } from "@/lib/utils";
 
 export default function ContractorDashboardPage() {
   const [profile, setProfile] = useState<any>(null);
@@ -86,7 +87,7 @@ export default function ContractorDashboardPage() {
               <Sparkles className="h-3.5 w-3.5" /> Contractor Hub
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              Welcome, {contractor?.company_name || profile?.full_name || "Contractor Partner"}
+              {getTimeBasedGreeting(contractor?.company_name || profile?.full_name, "Contractor Partner")}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground">
               Find new construction opportunities and manage your active project bids.

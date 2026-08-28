@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, CheckCircle2, DollarSign, MessageSquare, FileText, Sparkles } from "lucide-react";
+import { markNotificationsAsReadAction } from "@/actions/notifications";
 
 export default function ContractorNotificationsPage() {
+  useEffect(() => {
+    markNotificationsAsReadAction();
+  }, []);
   const [notifications, setNotifications] = useState([
     {
       id: "cn-1",

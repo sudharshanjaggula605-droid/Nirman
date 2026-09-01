@@ -9,17 +9,19 @@ import {
   Clock,
   CheckCircle2,
   PlusCircle,
-  ArrowRight,
-  Sparkles,
   ChevronRight,
-  Star,
+  Sparkles,
   AlertCircle,
   Eye,
+  Star,
+  ArrowRight,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getTimeBasedGreeting } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function OwnerDashboardPage() {
+  const { t } = useLanguage();
   const [profile, setProfile] = useState<any>(null);
   const [projects, setProjects] = useState<any[]>([]);
   const [tenders, setTenders] = useState<any[]>([]);
@@ -95,21 +97,21 @@ export default function OwnerDashboardPage() {
         <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1 text-xs font-bold text-orange-600">
-              <Sparkles className="h-3.5 w-3.5" /> Owner Workspace
+              <Sparkles className="h-3.5 w-3.5" /> {t("owner.workspace_badge", "Owner Workspace")}
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
               {getTimeBasedGreeting(profile?.full_name, "Property Owner")}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Here's a live overview of your construction projects, tenders, and contractor bids.
+              {t("owner.dashboard_title", "Project & Tender Overview")}
             </p>
           </div>
 
           <Link
             href="/owner/projects/new"
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 px-5 py-3 text-xs font-extrabold text-white shadow-lg shadow-orange-600/30 hover:from-orange-700 hover:to-amber-700 transition-all shrink-0"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-700 to-amber-600 px-5 py-3 text-xs font-extrabold text-white shadow-lg shadow-orange-700/30 hover:from-orange-800 hover:to-amber-700 transition-all shrink-0"
           >
-            <PlusCircle className="h-4 w-4" /> Post New Project
+            <PlusCircle className="h-4 w-4" /> {t("owner.post_new_tender", "Post New Project")}
           </Link>
         </div>
       </div>
@@ -118,15 +120,15 @@ export default function OwnerDashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <div className="rounded-2xl border bg-card p-4 space-y-2 shadow-sm">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-semibold">Total Projects</span>
-            <Building2 className="h-4 w-4 text-orange-500" />
+            <span className="text-xs font-semibold">{t("owner.total_projects", "Total Projects")}</span>
+            <Building2 className="h-4 w-4 text-orange-600" />
           </div>
           <div className="text-2xl font-extrabold text-foreground">{totalProjects}</div>
         </div>
 
         <div className="rounded-2xl border bg-card p-4 space-y-2 shadow-sm">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-semibold">Active Projects</span>
+            <span className="text-xs font-semibold">{t("owner.active_projects", "Active Projects")}</span>
             <Clock className="h-4 w-4 text-blue-500" />
           </div>
           <div className="text-2xl font-extrabold text-blue-600">{activeProjects}</div>
@@ -134,7 +136,7 @@ export default function OwnerDashboardPage() {
 
         <div className="rounded-2xl border bg-card p-4 space-y-2 shadow-sm">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-semibold">Active Tenders</span>
+            <span className="text-xs font-semibold">{t("owner.active_tenders", "Active Tenders")}</span>
             <FileText className="h-4 w-4 text-amber-500" />
           </div>
           <div className="text-2xl font-extrabold text-amber-600">{activeTenders}</div>
@@ -142,7 +144,7 @@ export default function OwnerDashboardPage() {
 
         <div className="rounded-2xl border bg-card p-4 space-y-2 shadow-sm">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-semibold">Total Bids</span>
+            <span className="text-xs font-semibold">{t("owner.total_bids_received", "Total Bids")}</span>
             <Users className="h-4 w-4 text-purple-500" />
           </div>
           <div className="text-2xl font-extrabold text-purple-600">{totalBids}</div>
@@ -150,7 +152,7 @@ export default function OwnerDashboardPage() {
 
         <div className="rounded-2xl border bg-card p-4 space-y-2 shadow-sm">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-semibold">Pending Bids</span>
+            <span className="text-xs font-semibold">{t("contractor.pending_bids", "Pending Bids")}</span>
             <AlertCircle className="h-4 w-4 text-rose-500" />
           </div>
           <div className="text-2xl font-extrabold text-rose-600">{pendingBids}</div>
@@ -158,12 +160,13 @@ export default function OwnerDashboardPage() {
 
         <div className="rounded-2xl border bg-card p-4 space-y-2 shadow-sm">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-semibold">Completed</span>
+            <span className="text-xs font-semibold">{t("badge.completed", "Completed")}</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           </div>
           <div className="text-2xl font-extrabold text-emerald-600">{completedProjects}</div>
         </div>
       </div>
+
 
       {/* Quick Actions */}
       <div className="rounded-2xl border bg-card p-5 space-y-3">

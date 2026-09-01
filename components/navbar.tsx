@@ -136,7 +136,7 @@ export function Navbar() {
               </Link>
               <Link
                 href="/register"
-                className="px-3.5 py-1.5 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-md shadow-sm shadow-orange-600/30 transition-colors"
+                className="px-3.5 py-1.5 text-xs font-bold text-white bg-orange-700 hover:bg-orange-800 rounded-md shadow-sm shadow-orange-700/30 transition-colors"
               >
                 Get Started
               </Link>
@@ -149,14 +149,16 @@ export function Navbar() {
           {mounted && (
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-2 rounded-lg border bg-card"
+              className="p-2 rounded-lg border bg-card text-card-foreground"
+              aria-label="Toggle theme"
             >
               {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
             </button>
           )}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg border"
+            className="p-2 rounded-lg border text-foreground"
+            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -201,7 +203,7 @@ export function Navbar() {
               <Link
                 href="/register"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full text-center py-2 text-sm font-semibold bg-orange-600 text-white rounded-md"
+                className="w-full text-center py-2 text-sm font-bold bg-orange-700 hover:bg-orange-800 text-white rounded-md shadow-sm shadow-orange-700/30"
               >
                 Get Started
               </Link>

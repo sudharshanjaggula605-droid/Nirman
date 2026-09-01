@@ -52,6 +52,7 @@ export function TenderCard({ tender }: TenderCardProps) {
             src={imageUrl}
             alt={tender.title}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             onError={() => setImgError(true)}
           />
@@ -72,7 +73,7 @@ export function TenderCard({ tender }: TenderCardProps) {
 
         {/* Bids Badge */}
         <div className="absolute top-3 right-3">
-          <span className="inline-flex items-center rounded-md bg-orange-600 px-2.5 py-1 text-xs font-bold text-white shadow-md">
+          <span className="inline-flex items-center rounded-md bg-orange-700 px-2.5 py-1 text-xs font-bold text-white shadow-md">
             {tender.bids_count || 0} Bids Submitted
           </span>
         </div>
@@ -137,7 +138,7 @@ export function TenderCard({ tender }: TenderCardProps) {
           </Link>
           <Link
             href={`/tenders/${tender.id}/bid`}
-            className="flex items-center justify-center gap-1 rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white shadow-sm shadow-orange-600/30 transition-all hover:bg-orange-700"
+            className="flex items-center justify-center gap-1 rounded-lg bg-orange-700 px-3 py-2 text-xs font-bold text-white shadow-sm shadow-orange-700/30 transition-all hover:bg-orange-800"
           >
             Submit Bid
             <ArrowUpRight className="h-3.5 w-3.5" />

@@ -45,8 +45,8 @@ export default function HomePage() {
         const { data: tenderData } = await supabase
           .from("tenders")
           .select(`
-            *,
-            project:projects(*, category:project_categories(name)),
+            id, title, budget_min, budget_max, bid_deadline, status, created_at,
+            project:projects(city, state, property_type, area_sqft, estimated_budget, category:project_categories(name)),
             bids:bids(count),
             images:tender_images(image_url)
           `)
@@ -143,7 +143,7 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-2">
                 <Link
                   href="/register?role=owner"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-orange-600/30 hover:bg-orange-700 transition-all"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-700 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-orange-700/30 hover:bg-orange-800 transition-all"
                 >
                   Post a Project
                   <ArrowRight className="h-4 w-4" />
@@ -182,6 +182,7 @@ export default function HomePage() {
                       src="/hero-construction.jpg"
                       alt="NIRMAN Construction Platform"
                       fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
                       className="object-cover"
                       priority
                       onError={() => setHeroImgError(true)}
@@ -265,7 +266,7 @@ export default function HomePage() {
             <div className="pt-2">
               <Link
                 href="/register?role=owner"
-                className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700"
+                className="inline-flex items-center gap-2 rounded-xl bg-orange-700 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-800"
               >
                 Post Your First Tender
               </Link>

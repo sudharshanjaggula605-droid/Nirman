@@ -65,23 +65,25 @@ function ContractorProjectsContent() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5 mr-2">
+      <div className="flex flex-wrap items-center gap-2 pb-1">
+        <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5 mr-1 shrink-0">
           <Filter className="h-3.5 w-3.5" /> Filter by Status:
         </span>
-        {["ALL", "ACTIVE", "COMPLETED"].map((st) => (
-          <button
-            key={st}
-            onClick={() => setFilter(st)}
-            className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-              filter === st
-                ? "bg-orange-600 text-white shadow-md"
-                : "bg-card border text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {st === "ALL" ? `All Projects (${projects.length})` : st === "ACTIVE" ? "Active Projects" : "Completed Projects"}
-          </button>
-        ))}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          {["ALL", "ACTIVE", "COMPLETED"].map((st) => (
+            <button
+              key={st}
+              onClick={() => setFilter(st)}
+              className={`rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold transition-all shrink-0 ${
+                filter === st
+                  ? "bg-orange-600 text-white shadow-md"
+                  : "bg-card border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {st === "ALL" ? `All (${projects.length})` : st === "ACTIVE" ? "Active" : "Completed"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Projects Grid */}

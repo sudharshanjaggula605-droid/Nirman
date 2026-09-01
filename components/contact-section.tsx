@@ -241,15 +241,17 @@ export function ContactSection() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {/* Name */}
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <label htmlFor="contact-name" className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                       <User className="h-3.5 w-3.5 text-orange-600" /> Full Name <span className="text-destructive">*</span>
                     </label>
                     <input
+                      id="contact-name"
                       type="text"
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="e.g. Rahul Kumar"
+                      aria-label="Full Name"
                       className="w-full rounded-xl border bg-background px-4 py-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                       required
                     />
@@ -257,15 +259,17 @@ export function ContactSection() {
 
                   {/* Email */}
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <label htmlFor="contact-email" className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                       <Mail className="h-3.5 w-3.5 text-orange-600" /> Email Address <span className="text-destructive">*</span>
                     </label>
                     <input
+                      id="contact-email"
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="e.g. rahul@example.com"
+                      aria-label="Email Address"
                       className="w-full rounded-xl border bg-background px-4 py-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                       required
                     />
@@ -273,28 +277,32 @@ export function ContactSection() {
 
                   {/* Phone */}
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <label htmlFor="contact-phone" className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                       <Phone className="h-3.5 w-3.5 text-orange-600" /> Phone Number (Optional)
                     </label>
                     <input
+                      id="contact-phone"
                       type="tel"
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
                       placeholder="e.g. +91 98765 43210"
+                      aria-label="Phone Number"
                       className="w-full rounded-xl border bg-background px-4 py-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                     />
                   </div>
 
                   {/* User Type */}
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <label htmlFor="contact-user-type" className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                       <ShieldCheck className="h-3.5 w-3.5 text-orange-600" /> I Am A <span className="text-destructive">*</span>
                     </label>
                     <select
+                      id="contact-user-type"
                       name="user_type"
                       value={formData.user_type}
                       onChange={handleChange}
+                      aria-label="User Type"
                       className="w-full rounded-xl border bg-background px-4 py-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50 cursor-pointer"
                       required
                     >
@@ -308,13 +316,15 @@ export function ContactSection() {
 
                   {/* Issue Type */}
                   <div className="space-y-2 sm:col-span-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <label htmlFor="contact-issue-type" className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                       <FileText className="h-3.5 w-3.5 text-orange-600" /> Issue Category <span className="text-destructive">*</span>
                     </label>
                     <select
+                      id="contact-issue-type"
                       name="issue_type"
                       value={formData.issue_type}
                       onChange={handleChange}
+                      aria-label="Issue Category"
                       className="w-full rounded-xl border bg-background px-4 py-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50 cursor-pointer"
                       required
                     >
@@ -328,15 +338,17 @@ export function ContactSection() {
 
                   {/* Subject */}
                   <div className="space-y-2 sm:col-span-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <label htmlFor="contact-subject" className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                       <MessageSquare className="h-3.5 w-3.5 text-orange-600" /> Subject <span className="text-destructive">*</span>
                     </label>
                     <input
+                      id="contact-subject"
                       type="text"
                       name="subject"
                       value={formData.subject}
                       onChange={handleChange}
                       placeholder="Brief summary of your query or issue"
+                      aria-label="Subject"
                       className="w-full rounded-xl border bg-background px-4 py-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                       required
                     />
@@ -344,15 +356,17 @@ export function ContactSection() {
 
                   {/* Message */}
                   <div className="space-y-2 sm:col-span-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <label htmlFor="contact-message" className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                       <MessageSquare className="h-3.5 w-3.5 text-orange-600" /> Message / Details <span className="text-destructive">*</span>
                     </label>
                     <textarea
+                      id="contact-message"
                       name="message"
                       rows={4}
                       value={formData.message}
                       onChange={handleChange}
                       placeholder="Describe your issue or query in detail..."
+                      aria-label="Message details"
                       className="w-full rounded-xl border bg-background px-4 py-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50 resize-y"
                       required
                     />
@@ -360,12 +374,14 @@ export function ContactSection() {
 
                   {/* Attachment */}
                   <div className="space-y-2 sm:col-span-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <label htmlFor="contact-file" className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                       <Paperclip className="h-3.5 w-3.5 text-orange-600" /> Attachment (Optional - Images, PDF, DOC up to 5MB)
                     </label>
                     <input
+                      id="contact-file"
                       ref={fileInputRef}
                       type="file"
+                      aria-label="Attachment upload"
                       accept="image/*,.pdf,.doc,.docx"
                       onChange={handleFileChange}
                       className="w-full text-xs text-muted-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-500/10 file:text-orange-600 hover:file:bg-orange-500/20 cursor-pointer border rounded-xl bg-background"
@@ -378,7 +394,7 @@ export function ContactSection() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-8 py-3.5 text-xs font-extrabold text-white shadow-lg shadow-orange-600/30 hover:bg-orange-700 disabled:opacity-50 transition-all cursor-pointer"
+                    className="inline-flex items-center gap-2 rounded-xl bg-orange-700 px-8 py-3.5 text-xs font-extrabold text-white shadow-lg shadow-orange-700/30 hover:bg-orange-800 disabled:opacity-50 transition-all cursor-pointer"
                   >
                     {submitting ? (
                       <>

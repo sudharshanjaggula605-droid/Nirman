@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { LanguageProvider } from "@/lib/i18n/language-context";
 
 export function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -13,15 +14,18 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
     pathname.startsWith("/contractor") ||
     pathname.startsWith("/admin");
 
-  if (isDashboardRoute) {
-    return <>{children}</>;
-  }
-
   return (
-    <>
-      <Navbar />
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </>
+    <LanguageProvider>
+      {isDashboardRoute ? (
+        children
+      ) : (
+        <>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </>
+      )}
+    </LanguageProvider>
   );
 }
+

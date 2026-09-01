@@ -41,20 +41,26 @@ export default function OwnerProfilePage() {
           .eq("id", user.id)
           .single();
 
-        if (prof) {
-          setProfile({
-            full_name: prof.full_name || "",
-            email: prof.email || user.email || "",
-            phone: prof.phone || "",
-            address: owner?.address || prof.address || "",
-            city: owner?.city || prof.city || "",
-            state: owner?.state || prof.state || "",
-            pincode: owner?.pincode || prof.pincode || "",
-            google_maps_url: owner?.google_maps_url || "",
-            about_me: owner?.about_me || "",
-            avatar_url: prof.avatar_url || "",
-          });
-        }
+        // Exact registered contact number from user's actual registration / account data
+        const registeredPhone =
+          prof?.phone ||
+          owner?.phone ||
+          user.user_metadata?.phone ||
+          user.phone ||
+          "";
+
+        setProfile({
+          full_name: prof?.full_name || owner?.full_name || user.user_metadata?.full_name || "",
+          email: prof?.email || user.email || "",
+          phone: registeredPhone,
+          address: owner?.address || prof?.address || "",
+          city: owner?.city || prof?.city || user.user_metadata?.city || "",
+          state: owner?.state || prof?.state || user.user_metadata?.state || "",
+          pincode: owner?.pincode || prof?.pincode || "",
+          google_maps_url: owner?.google_maps_url || "",
+          about_me: owner?.about_me || "",
+          avatar_url: prof?.avatar_url || "",
+        });
       } catch (err) {
         console.error("Error loading profile:", err);
       } finally {
@@ -194,7 +200,7 @@ export default function OwnerProfilePage() {
                   type="tel"
                   value={profile.phone}
                   onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                  placeholder="+91 9876543210"
+                  placeholder={loading ? "Loading registered number..." : "Registered Contact Number"}
                   className="w-full rounded-xl border bg-background/60 pl-10 pr-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                 />
               </div>

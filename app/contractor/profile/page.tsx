@@ -40,6 +40,7 @@ export default function ContractorProfilePage() {
   });
 
   const [portfolioPhotos, setPortfolioPhotos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -71,27 +72,35 @@ export default function ContractorProfilePage() {
 
         if (portData) setPortfolioPhotos(portData);
 
-        if (prof) {
-          setProfile({
-            company_name: cont?.company_name || prof.full_name || "",
-            contact_person: cont?.contact_person || prof.full_name || "",
-            email: prof.email || user.email || "",
-            phone: cont?.phone || prof.phone || "",
-            city: cont?.city || prof.city || "",
-            state: cont?.state || prof.state || "",
-            years_of_experience: cont?.years_of_experience || 5,
-            total_projects: cont?.total_projects || 15,
-            specializations: cont?.description || "Residential & Civil Construction",
-            gst_number: cont?.gst_number || "",
-            license_number: cont?.license_number || "",
-            description: cont?.description || "",
-            is_admin_verified: prof.status === "approved",
-            average_rating: cont?.average_rating || 4.9,
-            total_reviews: cont?.total_reviews || 24,
-          });
-        }
+        // Exact registered contact number from user's actual registration / account data
+        const registeredPhone =
+          cont?.phone ||
+          prof?.phone ||
+          user.user_metadata?.phone ||
+          user.phone ||
+          "";
+
+        setProfile({
+          company_name: cont?.company_name || prof?.full_name || user.user_metadata?.company_name || "",
+          contact_person: cont?.contact_person || prof?.full_name || user.user_metadata?.contact_person || user.user_metadata?.full_name || "",
+          email: prof?.email || user.email || cont?.email || "",
+          phone: registeredPhone,
+          city: cont?.city || prof?.city || user.user_metadata?.city || "",
+          state: cont?.state || prof?.state || user.user_metadata?.state || "",
+          years_of_experience: cont?.years_of_experience ?? 0,
+          total_projects: cont?.total_projects ?? 0,
+          specializations: cont?.description || "Residential & Civil Construction",
+          gst_number: cont?.gst_number || "",
+          license_number: cont?.license_number || "",
+          description: cont?.description || "",
+          is_admin_verified: prof?.status === "approved",
+          average_rating: cont?.average_rating || 5.0,
+          total_reviews: cont?.total_reviews || 0,
+        });
       } catch (err) {
         console.error("Error loading contractor profile:", err);
+      } finally {
+        setLoading(false);
       }
     }
     fetchContractorProfile();
@@ -106,6 +115,19 @@ export default function ContractorProfilePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Synchronize phone and personal details across profiles table
+      await supabase
+        .from("profiles")
+        .update({
+          full_name: profile.contact_person,
+          phone: profile.phone,
+          city: profile.city,
+          state: profile.state,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+
+      // Synchronize contractors table
       await supabase
         .from("contractors")
         .upsert({
@@ -268,6 +290,7 @@ export default function ContractorProfilePage() {
                 type="tel"
                 value={profile.phone}
                 onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                placeholder={loading ? "Loading registered number..." : "Registered Contact Number"}
                 className="w-full rounded-xl border bg-background/60 px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
               />
             </div>

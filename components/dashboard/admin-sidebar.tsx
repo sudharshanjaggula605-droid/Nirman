@@ -17,6 +17,7 @@ import {
   Shield,
   X,
   MessageSquare,
+  User,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -51,11 +52,19 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
   };
 
   return (
-    <aside
-      className={`fixed inset-y-0 left-0 z-40 w-64 border-r bg-slate-950 text-slate-100 transition-transform duration-300 md:static md:translate-x-0 ${
-        open ? "translate-x-0" : "-translate-x-full"
-      } flex flex-col justify-between`}
-    >
+    <>
+      {open && (
+        <div
+          onClick={onClose}
+          className="fixed inset-0 z-40 bg-black/70 backdrop-blur-xs md:hidden animate-in fade-in"
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 border-r bg-slate-950 text-slate-100 shadow-2xl transition-transform duration-300 md:static md:translate-x-0 md:shadow-none ${
+          open ? "translate-x-0" : "-translate-x-full"
+        } flex flex-col justify-between`}
+      >
       <div className="flex flex-col h-full overflow-y-auto">
         {/* Sidebar Header - Clickable Logo & Text redirecting to Home / Landing Page */}
         <div className="flex h-16 items-center justify-between px-6 border-b border-slate-800">
@@ -114,5 +123,6 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
         </div>
       </div>
     </aside>
+    </>
   );
 }

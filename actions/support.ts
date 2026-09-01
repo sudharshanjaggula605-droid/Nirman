@@ -151,6 +151,26 @@ export async function submitSupportRequestAction(
   }
 }
 
+export async function getSupportRequestsAction() {
+  try {
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
+      .from("support_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching support requests with admin client:", error);
+      return { success: false, data: [] };
+    }
+
+    return { success: true, data: data || [] };
+  } catch (err: any) {
+    console.error("Unexpected error in getSupportRequestsAction:", err);
+    return { success: false, data: [] };
+  }
+}
+
 export async function updateSupportRequestAction(
   requestId: string,
   status: string,
@@ -201,3 +221,4 @@ export async function updateSupportRequestAction(
     return { success: false, error: "An unexpected error occurred." };
   }
 }
+

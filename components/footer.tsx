@@ -21,7 +21,7 @@ export function Footer() {
 
           {/* Platform Links */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Platform</h4>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Platform</h3>
             <ul className="space-y-2 text-xs text-muted-foreground">
               <li><Link href="/" className="hover:text-orange-600">Live Tenders</Link></li>
               <li><Link href="/register?role=owner" className="hover:text-orange-600">Post Construction Tender</Link></li>
@@ -32,7 +32,7 @@ export function Footer() {
 
           {/* Enterprise Features */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Key Workflows</h4>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Key Workflows</h3>
             <ul className="space-y-2 text-xs text-muted-foreground">
               <li className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-green-500" /> Admin Verification</li>
               <li className="flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5 text-blue-500" /> Transparent Bidding</li>
@@ -42,7 +42,7 @@ export function Footer() {
 
           {/* Legal / Contact */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Governance</h4>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Governance</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
               Built on Supabase PostgreSQL & Next.js App Router for enterprise-grade security and RLS data compliance.
             </p>

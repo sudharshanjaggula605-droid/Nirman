@@ -15,8 +15,10 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getTimeBasedGreeting } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function ContractorDashboardPage() {
+  const { t } = useLanguage();
   const [profile, setProfile] = useState<any>(null);
   const [contractor, setContractor] = useState<any>(null);
   const [tenders, setTenders] = useState<any[]>([]);
@@ -84,21 +86,21 @@ export default function ContractorDashboardPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1 text-xs font-bold text-orange-600">
-              <Sparkles className="h-3.5 w-3.5" /> Contractor Hub
+              <Sparkles className="h-3.5 w-3.5" /> {t("contractor.workspace_badge", "Contractor Hub")}
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
               {getTimeBasedGreeting(contractor?.company_name || profile?.full_name, "Contractor Partner")}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Find new construction opportunities and manage your active project bids.
+              {t("contractor.dashboard_title", "Contractor Dashboard")}
             </p>
           </div>
 
           <Link
             href="/contractor/tenders"
-            className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-3 text-xs font-extrabold text-white shadow-lg shadow-orange-600/30 hover:bg-orange-700 transition-all shrink-0"
+            className="inline-flex items-center gap-2 rounded-xl bg-orange-700 px-5 py-3 text-xs font-extrabold text-white shadow-lg shadow-orange-700/30 hover:bg-orange-800 transition-all shrink-0"
           >
-            <Search className="h-4 w-4" /> Find Tenders
+            <Search className="h-4 w-4" /> {t("contractor.find_open_tenders", "Browse Open Tenders")}
           </Link>
         </div>
       </div>
@@ -107,15 +109,15 @@ export default function ContractorDashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <div className="rounded-2xl border bg-card p-4 space-y-2 shadow-sm">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-semibold">Available Tenders</span>
-            <Search className="h-4 w-4 text-orange-500" />
+            <span className="text-xs font-semibold">{t("contractor.available_tenders", "Available Tenders")}</span>
+            <Search className="h-4 w-4 text-orange-600" />
           </div>
           <div className="text-2xl font-extrabold text-foreground">{availableTendersCount}</div>
         </div>
 
         <div className="rounded-2xl border bg-card p-4 space-y-2 shadow-sm">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-semibold">My Bids</span>
+            <span className="text-xs font-semibold">{t("contractor.total_bids_submitted", "My Bids")}</span>
             <FileText className="h-4 w-4 text-blue-500" />
           </div>
           <div className="text-2xl font-extrabold text-blue-600">{totalBidsCount}</div>
@@ -123,7 +125,7 @@ export default function ContractorDashboardPage() {
 
         <div className="rounded-2xl border bg-card p-4 space-y-2 shadow-sm">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-semibold">Pending Bids</span>
+            <span className="text-xs font-semibold">{t("contractor.pending_bids", "Pending Bids")}</span>
             <Clock className="h-4 w-4 text-amber-500" />
           </div>
           <div className="text-2xl font-extrabold text-amber-600">{pendingBidsCount}</div>
@@ -131,7 +133,7 @@ export default function ContractorDashboardPage() {
 
         <div className="rounded-2xl border bg-card p-4 space-y-2 shadow-sm">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-semibold">Accepted Bids</span>
+            <span className="text-xs font-semibold">{t("contractor.accepted_bids", "Accepted Bids")}</span>
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           </div>
           <div className="text-2xl font-extrabold text-emerald-600">{acceptedBidsCount}</div>
@@ -139,7 +141,7 @@ export default function ContractorDashboardPage() {
 
         <div className="rounded-2xl border bg-card p-4 space-y-2 shadow-sm">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-semibold">Active Projects</span>
+            <span className="text-xs font-semibold">{t("nav.active_projects", "Active Projects")}</span>
             <Building2 className="h-4 w-4 text-purple-500" />
           </div>
           <div className="text-2xl font-extrabold text-purple-600">{activeProjectsCount}</div>
@@ -147,12 +149,13 @@ export default function ContractorDashboardPage() {
 
         <div className="rounded-2xl border bg-card p-4 space-y-2 shadow-sm">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-semibold">Completed</span>
+            <span className="text-xs font-semibold">{t("badge.completed", "Completed")}</span>
             <Briefcase className="h-4 w-4 text-slate-500" />
           </div>
           <div className="text-2xl font-extrabold text-foreground">{completedProjectsCount}</div>
         </div>
       </div>
+
 
       {/* Contractor Quick Actions */}
       <div className="rounded-2xl border bg-card p-5 space-y-3">

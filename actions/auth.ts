@@ -205,11 +205,9 @@ export async function registerOwnerAction(formData: FormData) {
     const adminClient = createAdminClient();
     await adminClient.auth.admin.updateUserById(data.user.id, { email_confirm: true });
 
-    await adminClient.from("profiles").upsert(
+    const { error: profErr } = await adminClient.from("profiles").upsert(
       {
         id: data.user.id,
-        first_name: first_name || full_name,
-        last_name: last_name || "",
         full_name,
         email,
         phone: phone || null,
@@ -219,11 +217,17 @@ export async function registerOwnerAction(formData: FormData) {
         city: city || null,
         state: state || null,
         pincode: pincode || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       },
       { onConflict: "id" }
     );
 
-    await adminClient.from("owners").upsert(
+    if (profErr) {
+      console.error("[PROFILE INSERT OWNER ERROR]:", profErr);
+    }
+
+    const { error: ownErr } = await adminClient.from("owners").upsert(
       {
         id: data.user.id,
         full_name,
@@ -233,9 +237,15 @@ export async function registerOwnerAction(formData: FormData) {
         city: city || null,
         state: state || null,
         pincode: pincode || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       },
       { onConflict: "id" }
     );
+
+    if (ownErr) {
+      console.error("[OWNER TABLE INSERT ERROR]:", ownErr);
+    }
 
     revalidatePath("/admin/users");
     revalidatePath("/admin/owners");
@@ -295,22 +305,26 @@ export async function registerContractorAction(formData: FormData) {
     const adminClient = createAdminClient();
     await adminClient.auth.admin.updateUserById(userId, { email_confirm: true });
 
-    await adminClient.from("profiles").upsert(
+    const { error: profErr } = await adminClient.from("profiles").upsert(
       {
         id: userId,
-        first_name: first_name || contact_person,
-        last_name: last_name || "",
         full_name: contact_person,
         email,
         phone: phone || null,
         role: "contractor",
         status: "pending",
         city: city || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       },
       { onConflict: "id" }
     );
 
-    await adminClient.from("contractors").upsert(
+    if (profErr) {
+      console.error("[PROFILE INSERT CONTRACTOR ERROR]:", profErr);
+    }
+
+    const { error: contErr } = await adminClient.from("contractors").upsert(
       {
         id: userId,
         company_name: company_name || contact_person,
@@ -321,9 +335,15 @@ export async function registerContractorAction(formData: FormData) {
         years_of_experience,
         total_projects: 0,
         description: `Specialized in ${specialization}. Operating in ${city || "India"}. Identity verification: ${identity_verification_status}.`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       },
       { onConflict: "id" }
     );
+
+    if (contErr) {
+      console.error("[CONTRACTOR TABLE INSERT ERROR]:", contErr);
+    }
 
     // Save optional previous project photos to contractor_portfolio
     if (projectPhotos.length > 0) {

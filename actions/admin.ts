@@ -19,20 +19,30 @@ export async function approveUserAction(targetUserId: string, reason?: string) {
     .from("profiles")
     .update({
       status: "approved",
-      approved_at: new Date().toISOString(),
-      approved_by: user.id,
       updated_at: new Date().toISOString(),
     })
     .eq("id", targetUserId)
     .select("full_name, phone, role, email")
     .single();
 
+  if (profileErr) {
+    console.error("[ADMIN APPROVE ERROR]:", profileErr);
+  }
+
   // Try RPC as fallback
-  await adminClient.rpc("approve_user", {
-    p_target_user_id: targetUserId,
-    p_admin_id: user.id,
-    p_reason: reason || null,
-  });
+  try {
+    await adminClient.rpc("approve_user", {
+      p_target_user_id: targetUserId,
+      p_admin_id: user.id,
+      p_reason: reason || null,
+    });
+  } catch {}
+
+  // Also update owners or contractors table if present
+  try {
+    await adminClient.from("owners").update({ updated_at: new Date().toISOString() }).eq("id", targetUserId);
+    await adminClient.from("contractors").update({ updated_at: new Date().toISOString() }).eq("id", targetUserId);
+  } catch {}
 
   // 2. Dispatch WhatsApp & Email Approval Notification to registered contact details
   let notificationStatus = "logged";
@@ -55,12 +65,14 @@ export async function approveUserAction(targetUserId: string, reason?: string) {
   }
 
   // 3. Log Admin Action with notification details
-  await adminClient.from("admin_actions").insert({
-    admin_id: user.id,
-    target_user_id: targetUserId,
-    action: "approve_user",
-    reason: reason || `Approved account. Delivery: ${channelSummary || notificationStatus}`,
-  });
+  try {
+    await adminClient.from("admin_actions").insert({
+      admin_id: user.id,
+      target_user_id: targetUserId,
+      action: "approve_user",
+      reason: reason || `Approved account. Delivery: ${channelSummary || notificationStatus}`,
+    });
+  } catch {}
 
   revalidatePath("/admin/approvals");
   revalidatePath("/admin/owners");
@@ -77,19 +89,34 @@ export async function rejectUserAction(targetUserId: string, reason?: string) {
 
   if (!user) return { error: "Unauthenticated" };
 
-  const { error } = await supabase.rpc("reject_user", {
-    p_target_user_id: targetUserId,
-    p_admin_id: user.id,
-    p_reason: reason || "Account application was not approved.",
-  });
+  const adminClient = createAdminClient();
+  const { error } = await adminClient
+    .from("profiles")
+    .update({
+      status: "rejected",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", targetUserId);
 
   if (error) {
     return { error: error.message };
   }
 
+  // Log rejection
+  try {
+    await adminClient.from("admin_actions").insert({
+      admin_id: user.id,
+      target_user_id: targetUserId,
+      action: "reject_user",
+      reason: reason || "Account application was not approved.",
+    });
+  } catch {}
+
   revalidatePath("/admin/approvals");
   revalidatePath("/admin/owners");
   revalidatePath("/admin/contractors");
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/dashboard");
 
   return { success: true };
 }
@@ -335,6 +362,54 @@ export async function getAllAdminUsersAction(): Promise<{
           profileIds.add(c.id);
         }
       }
+    }
+
+    // 5. Ensure all Supabase Auth users are included and synced
+    try {
+      const { data: authUsersData } = await adminClient.auth.admin.listUsers();
+      if (authUsersData?.users) {
+        for (const u of authUsersData.users) {
+          const meta = u.user_metadata || {};
+          const role = meta.role || (u.email?.includes("admin") ? "admin" : "owner");
+          if (role === "admin") continue;
+
+          if (!profileIds.has(u.id)) {
+            const fullName = meta.full_name || meta.contact_person || u.email?.split("@")[0] || "Registered User";
+            const phone = meta.phone || "";
+            const status = "pending";
+
+            // Self-heal profile row
+            await adminClient.from("profiles").upsert({
+              id: u.id,
+              full_name: fullName,
+              email: u.email,
+              phone: phone || null,
+              role: role,
+              status: status,
+              created_at: u.created_at || new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+
+            combinedUsers.push({
+              id: u.id,
+              full_name: fullName,
+              email: u.email || "",
+              phone: phone,
+              role: role,
+              status: status,
+              created_at: u.created_at || new Date().toISOString(),
+              owner: role === "owner" ? meta : null,
+              contractor: role === "contractor" ? meta : null,
+              company_name: meta.company_name || fullName,
+              city: meta.city || "",
+              state: meta.state || "",
+            });
+            profileIds.add(u.id);
+          }
+        }
+      }
+    } catch (authListErr) {
+      console.warn("Auth users sync note:", authListErr);
     }
 
     // Sort by newest first

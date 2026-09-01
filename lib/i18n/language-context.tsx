@@ -25,10 +25,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     async function initLanguage() {
       // 1. Check localStorage first
       if (typeof window !== "undefined") {
-        const localLang = localStorage.getItem("nirman_language");
-        if (localLang && SUPPORTED_LANGUAGES.some((l) => l.code === localLang)) {
-          setLanguageState(localLang);
-          document.documentElement.lang = localLang;
+        try {
+          const localLang = localStorage.getItem("nirman_language");
+          if (localLang && SUPPORTED_LANGUAGES.some((l) => l.code === localLang)) {
+            setLanguageState(localLang);
+            document.documentElement.lang = localLang;
+          }
+        } catch {
+          // Ignore localStorage errors
         }
       }
 
@@ -40,13 +44,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
             .from("profiles")
             .select("preferred_language")
             .eq("id", user.id)
-            .single();
+            .maybeSingle();
 
           if (profile?.preferred_language && SUPPORTED_LANGUAGES.some((l) => l.code === profile.preferred_language)) {
             setLanguageState(profile.preferred_language);
             if (typeof window !== "undefined") {
-              localStorage.setItem("nirman_language", profile.preferred_language);
-              document.documentElement.lang = profile.preferred_language;
+              try {
+                localStorage.setItem("nirman_language", profile.preferred_language);
+                document.documentElement.lang = profile.preferred_language;
+              } catch {}
             }
           }
         }
@@ -65,8 +71,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setLanguageState(newLang);
 
     if (typeof window !== "undefined") {
-      localStorage.setItem("nirman_language", newLang);
-      document.documentElement.lang = newLang;
+      try {
+        localStorage.setItem("nirman_language", newLang);
+        document.documentElement.lang = newLang;
+      } catch {}
     }
 
     // Attempt to persist to user profile if column exists and user logged in
@@ -79,17 +87,22 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
           .eq("id", user.id);
       }
     } catch (err) {
-      // Non-blocking if table doesn't have column
+      // Non-blocking
     }
   };
 
   const t = (key: TranslationKey, defaultText?: string): string => {
-    const langDict = translations[language] || translations[DEFAULT_LANGUAGE] || {};
-    if (langDict[key]) {
-      return langDict[key];
+    if (!key) return defaultText || "";
+    try {
+      const langDict = translations[language] || translations[DEFAULT_LANGUAGE] || {};
+      if (langDict[key]) {
+        return langDict[key];
+      }
+      const defaultDict = translations[DEFAULT_LANGUAGE] || {};
+      return defaultDict[key] || defaultText || key;
+    } catch {
+      return defaultText || key;
     }
-    const defaultDict = translations[DEFAULT_LANGUAGE] || {};
-    return defaultDict[key] || defaultText || key;
   };
 
   const currentLanguageOption =
@@ -114,7 +127,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 export function useLanguage() {
   const context = useContext(LanguageContext);
   if (!context) {
-    throw new Error("useLanguage must be used within a LanguageProvider");
+    return {
+      language: DEFAULT_LANGUAGE,
+      setLanguage: async () => {},
+      t: (key: TranslationKey, defaultText?: string) => defaultText || key,
+      languages: SUPPORTED_LANGUAGES,
+      currentLanguageOption: SUPPORTED_LANGUAGES[0],
+      isLoaded: true,
+    };
   }
   return context;
 }

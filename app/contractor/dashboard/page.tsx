@@ -12,9 +12,10 @@ import {
   ChevronRight,
   Sparkles,
   MapPin,
+  Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { getTimeBasedGreeting } from "@/lib/utils";
+import { getTimeBasedGreeting, formatDate, formatCurrency } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function ContractorDashboardPage() {
@@ -24,28 +25,33 @@ export default function ContractorDashboardPage() {
   const [tenders, setTenders] = useState<any[]>([]);
   const [myBids, setMyBids] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   const supabase = createClient();
 
   useEffect(() => {
+    setMounted(true);
     async function loadContractorData() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+          setLoading(false);
+          return;
+        }
 
         const { data: prof } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", user.id)
-          .single();
-        setProfile(prof);
+          .maybeSingle();
+        if (prof) setProfile(prof);
 
         const { data: cont } = await supabase
           .from("contractors")
           .select("*")
           .eq("id", user.id)
-          .single();
-        setContractor(cont);
+          .maybeSingle();
+        if (cont) setContractor(cont);
 
         // Fetch open active tenders
         const { data: openTenders } = await supabase
@@ -71,13 +77,34 @@ export default function ContractorDashboardPage() {
     loadContractorData();
   }, []);
 
-  // Compute real dynamic metric counts directly from database
-  const availableTendersCount = tenders.length;
-  const totalBidsCount = myBids.length;
-  const pendingBidsCount = myBids.filter((b) => b.status === "pending").length;
-  const acceptedBidsCount = myBids.filter((b) => b.status === "accepted").length;
-  const activeProjectsCount = myBids.filter((b) => b.status === "accepted").length;
+  // Compute real dynamic metric counts directly from database safely
+  const availableTendersCount = tenders?.length || 0;
+  const totalBidsCount = myBids?.length || 0;
+  const pendingBidsCount = (myBids || []).filter((b) => b?.status === "pending").length;
+  const acceptedBidsCount = (myBids || []).filter((b) => b?.status === "accepted").length;
+  const activeProjectsCount = (myBids || []).filter((b) => b?.status === "accepted").length;
   const completedProjectsCount = contractor?.total_projects || 0;
+
+  const greetingDisplay = mounted
+    ? getTimeBasedGreeting(profile?.first_name || contractor?.contact_person || profile?.full_name, "Contractor")
+    : "Contractor Workspace";
+
+  if (loading) {
+    return (
+      <div className="space-y-8 pb-12 animate-pulse">
+        <div className="rounded-3xl border bg-card/60 p-8 h-36" />
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="rounded-2xl border bg-card/60 p-4 h-24" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-7 rounded-2xl border bg-card/60 p-6 h-64" />
+          <div className="lg:col-span-5 rounded-2xl border bg-card/60 p-6 h-64" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-12">
@@ -89,7 +116,7 @@ export default function ContractorDashboardPage() {
               <Sparkles className="h-3.5 w-3.5" /> {t("contractor.workspace_badge", "Contractor Hub")}
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              {getTimeBasedGreeting(contractor?.company_name || profile?.full_name, "Contractor Partner")}
+              {greetingDisplay}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground">
               {t("contractor.dashboard_title", "Contractor Dashboard")}
@@ -98,7 +125,7 @@ export default function ContractorDashboardPage() {
 
           <Link
             href="/contractor/tenders"
-            className="inline-flex items-center gap-2 rounded-xl bg-orange-700 px-5 py-3 text-xs font-extrabold text-white shadow-lg shadow-orange-700/30 hover:bg-orange-800 transition-all shrink-0"
+            className="inline-flex items-center gap-2 rounded-xl bg-orange-700 px-5 py-3 text-xs font-extrabold text-white shadow-lg shadow-orange-700/30 hover:bg-orange-800 transition-all shrink-0 cursor-pointer"
           >
             <Search className="h-4 w-4" /> {t("contractor.find_open_tenders", "Browse Open Tenders")}
           </Link>
@@ -155,7 +182,6 @@ export default function ContractorDashboardPage() {
           <div className="text-2xl font-extrabold text-foreground">{completedProjectsCount}</div>
         </div>
       </div>
-
 
       {/* Contractor Quick Actions */}
       <div className="rounded-2xl border bg-card p-5 space-y-3">
@@ -223,13 +249,13 @@ export default function ContractorDashboardPage() {
                       </div>
                     </div>
                     <span className="font-extrabold text-sm text-emerald-600">
-                      Est. ₹{((tender.budget_max || 3500000) / 100000).toFixed(1)}L
+                      Est. ₹{((parseFloat(tender.budget_max || "3500000")) / 100000).toFixed(1)}L
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between text-xs pt-2 border-t border-muted/40">
                     <span className="text-muted-foreground">
-                      Deadline: <strong className="text-foreground">{new Date(tender.bid_deadline).toLocaleDateString()}</strong>
+                      Deadline: <strong className="text-foreground">{formatDate(tender.bid_deadline)}</strong>
                     </span>
 
                     <Link
@@ -283,8 +309,8 @@ export default function ContractorDashboardPage() {
                     </div>
 
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Quotation: <strong className="text-foreground">₹{(bid.quotation_amount / 100000).toFixed(2)}L</strong></span>
-                      <span>Duration: <strong className="text-foreground">{Math.round(bid.estimated_completion_days / 30)} mo</strong></span>
+                      <span>Quotation: <strong className="text-foreground">{formatCurrency(bid.quotation_amount)}</strong></span>
+                      <span>Duration: <strong className="text-foreground">{Math.round((bid.estimated_completion_days || 180) / 30)} mo</strong></span>
                     </div>
                   </div>
                 );

@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { HardHat, LogIn, AlertCircle, Mail, Lock } from "lucide-react";
 import { loginAction } from "@/actions/auth";
 
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirectTo") || "";
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [emailVal, setEmailVal] = useState("");
@@ -16,11 +20,25 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const result = await loginAction(formData);
+    try {
+      const formData = new FormData(e.currentTarget);
+      if (redirectTo) {
+        formData.set("redirectTo", redirectTo);
+      }
 
-    if (result?.error) {
-      setError(result.error);
+      const result = await loginAction(formData);
+
+      if (result?.error) {
+        setError(result.error);
+        setLoading(false);
+      } else if (result?.redirectUrl) {
+        window.location.href = result.redirectUrl;
+      }
+    } catch (err: any) {
+      if (err.message && err.message.includes("NEXT_REDIRECT")) {
+        return;
+      }
+      setError(err.message || "Authentication failed.");
       setLoading(false);
     }
   };
@@ -66,6 +84,8 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-foreground tracking-wide flex items-center justify-between">
               Email Address
@@ -105,7 +125,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 px-4 py-3 text-sm font-extrabold text-white shadow-lg shadow-orange-600/30 hover:from-orange-700 hover:to-amber-700 disabled:opacity-50 transition-all"
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 px-4 py-3 text-sm font-extrabold text-white shadow-lg shadow-orange-600/30 hover:from-orange-700 hover:to-amber-700 disabled:opacity-50 transition-all cursor-pointer"
           >
             <LogIn className="h-4 w-4" />
             {loading ? "Verifying Credentials..." : "Sign In"}
@@ -120,5 +140,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs">Loading sign in portal...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

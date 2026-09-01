@@ -23,6 +23,7 @@ export default function ContractorTenderDetailPage({ params }: { params: { id: s
   const [submitting, setSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Form states for bidding
   const [quotation, setQuotation] = useState("2850000");
@@ -56,29 +57,75 @@ export default function ContractorTenderDetailPage({ params }: { params: { id: s
     ],
   };
 
+  const scrollToFirstInvalid = (errors: Record<string, string>) => {
+    setFieldErrors(errors);
+    const firstKey = Object.keys(errors)[0];
+    if (firstKey) {
+      const el = document.getElementById(firstKey);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.focus();
+      }
+    }
+  };
+
+  const validateBidForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!quotation.trim() || Number(quotation) <= 0) {
+      errors["bid_quotation"] = "Please enter your total quotation amount in ₹.";
+    }
+    if (!completionDays.trim() || Number(completionDays) <= 0) {
+      errors["bid_completion_days"] = "Please specify the estimated completion days.";
+    }
+    if (!startDate.trim()) {
+      errors["bid_start_date"] = "Please select a proposed start date.";
+    }
+    if (!proposal.trim() || proposal.trim().length < 10) {
+      errors["bid_proposal"] = "Please write a proposal statement (min 10 characters).";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      scrollToFirstInvalid(errors);
+      return false;
+    }
+
+    setFieldErrors({});
+    return true;
+  };
+
   const handleSubmitBid = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.set("tender_id", tender.id);
-    formData.set("quotation_amount", quotation);
-    formData.set("material_cost", materialCost);
-    formData.set("labour_cost", labourCost);
-    formData.set("equipment_cost", equipmentCost);
-    formData.set("other_cost", otherCost);
-    formData.set("estimated_completion_days", completionDays);
-    formData.set("proposed_start_date", startDate);
-    formData.set("proposal", proposal);
+    const isValid = validateBidForm();
+    if (!isValid) return;
 
-    const res = await submitBidAction(formData);
+    setSubmitting(true);
 
-    if (res?.error) {
-      setError(res.error);
-      setSubmitting(false);
-    } else {
-      setSubmissionSuccess(true);
+    try {
+      const formData = new FormData();
+      formData.set("tender_id", tender.id);
+      formData.set("quotation_amount", quotation);
+      formData.set("material_cost", materialCost);
+      formData.set("labour_cost", labourCost);
+      formData.set("equipment_cost", equipmentCost);
+      formData.set("other_cost", otherCost);
+      formData.set("estimated_completion_days", completionDays);
+      formData.set("proposed_start_date", startDate);
+      formData.set("proposal", proposal);
+
+      const res = await submitBidAction(formData);
+
+      if (res?.error) {
+        setError(res.error);
+        setSubmitting(false);
+      } else {
+        setSubmissionSuccess(true);
+        setSubmitting(false);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to submit bid.");
       setSubmitting(false);
     }
   };
@@ -96,8 +143,13 @@ export default function ContractorTenderDetailPage({ params }: { params: { id: s
         </div>
 
         <button
-          onClick={() => setShowBidForm(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-6 py-3 text-xs font-extrabold text-white shadow-lg shadow-orange-600/30 hover:bg-orange-700 transition-all shrink-0"
+          onClick={() => {
+            setShowBidForm(true);
+            setTimeout(() => {
+              document.getElementById("bid-form-container")?.scrollIntoView({ behavior: "smooth" });
+            }, 100);
+          }}
+          className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-6 py-3 text-xs font-extrabold text-white shadow-lg shadow-orange-600/30 hover:bg-orange-700 transition-all shrink-0 cursor-pointer"
         >
           <Sparkles className="h-4 w-4" /> Submit Bid
         </button>
@@ -170,7 +222,7 @@ export default function ContractorTenderDetailPage({ params }: { params: { id: s
           BID SUBMISSION MODAL / SECTION
       =================================================== */}
       {(showBidForm || submissionSuccess) && (
-        <div className="rounded-3xl border border-orange-500/50 bg-card p-6 sm:p-8 space-y-6 shadow-2xl ring-2 ring-orange-500/20">
+        <div id="bid-form-container" className="rounded-3xl border border-orange-500/50 bg-card p-6 sm:p-8 space-y-6 shadow-2xl ring-2 ring-orange-500/20">
           <div className="flex items-center justify-between border-b pb-4">
             <div className="space-y-1">
               <h2 className="text-lg font-extrabold text-foreground">Submit Quotation & BOQ Proposal</h2>
@@ -178,20 +230,23 @@ export default function ContractorTenderDetailPage({ params }: { params: { id: s
             </div>
             <button
               onClick={() => setShowBidForm(false)}
-              className="text-xs font-bold text-muted-foreground hover:text-foreground"
+              className="text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer"
             >
               Close ✕
             </button>
           </div>
 
           {submissionSuccess ? (
-            <div className="rounded-2xl bg-emerald-500/10 p-6 text-center space-y-3 border border-emerald-500/20">
-              <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" />
-              <h3 className="text-lg font-extrabold text-foreground">Your bid has been submitted successfully.</h3>
-              <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                The property owner will review your quotation, cost breakdown, and company portfolio. You can monitor the bid status from your dashboard.
-              </p>
-              <div className="pt-2">
+            <div className="rounded-2xl bg-emerald-500/10 p-8 text-center space-y-4 border border-emerald-500/20 animate-in fade-in">
+              <CheckCircle2 className="h-14 w-14 text-emerald-500 mx-auto" />
+              <div className="space-y-1">
+                <h3 className="text-xl font-extrabold text-foreground">✓ Submission Successful</h3>
+                <p className="text-sm font-semibold text-foreground">Your bid has been submitted successfully.</p>
+                <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                  Thank you for using NIRMAN. The property owner will review your quotation, cost breakdown, and company portfolio.
+                </p>
+              </div>
+              <div className="pt-3">
                 <Link
                   href="/contractor/bids"
                   className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700"
@@ -201,7 +256,7 @@ export default function ContractorTenderDetailPage({ params }: { params: { id: s
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmitBid} className="space-y-6">
+            <form onSubmit={handleSubmitBid} className="space-y-6" noValidate>
               {error && (
                 <div className="rounded-xl bg-destructive/10 p-4 text-xs font-bold text-destructive border border-destructive/20 flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 shrink-0" />
@@ -212,36 +267,84 @@ export default function ContractorTenderDetailPage({ params }: { params: { id: s
               {/* Quotation & Timeline */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Total Quotation Amount (₹) *</label>
+                  <label htmlFor="bid_quotation" className="text-xs font-bold text-foreground">
+                    Total Quotation Amount (₹) *
+                  </label>
                   <input
+                    id="bid_quotation"
                     type="number"
-                    required
                     value={quotation}
-                    onChange={(e) => setQuotation(e.target.value)}
-                    className="w-full rounded-xl border bg-background/60 px-3.5 py-2.5 text-sm font-extrabold text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                    onChange={(e) => {
+                      setQuotation(e.target.value);
+                      if (fieldErrors["bid_quotation"]) {
+                        setFieldErrors((prev) => {
+                          const n = { ...prev };
+                          delete n["bid_quotation"];
+                          return n;
+                        });
+                      }
+                    }}
+                    className={`w-full rounded-xl border bg-background/60 px-3.5 py-2.5 text-sm font-extrabold text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
+                      fieldErrors["bid_quotation"] ? "border-rose-500 ring-2 ring-rose-500/30" : ""
+                    }`}
                   />
+                  {fieldErrors["bid_quotation"] && (
+                    <p className="text-[11px] font-bold text-rose-500">{fieldErrors["bid_quotation"]}</p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Estimated Completion (Days) *</label>
+                  <label htmlFor="bid_completion_days" className="text-xs font-bold text-foreground">
+                    Estimated Completion (Days) *
+                  </label>
                   <input
+                    id="bid_completion_days"
                     type="number"
-                    required
                     value={completionDays}
-                    onChange={(e) => setCompletionDays(e.target.value)}
-                    className="w-full rounded-xl border bg-background/60 px-3.5 py-2.5 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                    onChange={(e) => {
+                      setCompletionDays(e.target.value);
+                      if (fieldErrors["bid_completion_days"]) {
+                        setFieldErrors((prev) => {
+                          const n = { ...prev };
+                          delete n["bid_completion_days"];
+                          return n;
+                        });
+                      }
+                    }}
+                    className={`w-full rounded-xl border bg-background/60 px-3.5 py-2.5 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
+                      fieldErrors["bid_completion_days"] ? "border-rose-500 ring-2 ring-rose-500/30" : ""
+                    }`}
                   />
+                  {fieldErrors["bid_completion_days"] && (
+                    <p className="text-[11px] font-bold text-rose-500">{fieldErrors["bid_completion_days"]}</p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Proposed Start Date *</label>
+                  <label htmlFor="bid_start_date" className="text-xs font-bold text-foreground">
+                    Proposed Start Date *
+                  </label>
                   <input
+                    id="bid_start_date"
                     type="date"
-                    required
                     value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full rounded-xl border bg-background/60 px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      if (fieldErrors["bid_start_date"]) {
+                        setFieldErrors((prev) => {
+                          const n = { ...prev };
+                          delete n["bid_start_date"];
+                          return n;
+                        });
+                      }
+                    }}
+                    className={`w-full rounded-xl border bg-background/60 px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${
+                      fieldErrors["bid_start_date"] ? "border-rose-500 ring-2 ring-rose-500/30" : ""
+                    }`}
                   />
+                  {fieldErrors["bid_start_date"] && (
+                    <p className="text-[11px] font-bold text-rose-500">{fieldErrors["bid_start_date"]}</p>
+                  )}
                 </div>
               </div>
 
@@ -292,15 +395,31 @@ export default function ContractorTenderDetailPage({ params }: { params: { id: s
 
               {/* Proposal Text */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Proposal Statement / Suitability Explanation *</label>
+                <label htmlFor="bid_proposal" className="text-xs font-bold text-foreground">
+                  Proposal Statement / Suitability Explanation *
+                </label>
                 <textarea
+                  id="bid_proposal"
                   rows={4}
-                  required
                   value={proposal}
-                  onChange={(e) => setProposal(e.target.value)}
+                  onChange={(e) => {
+                    setProposal(e.target.value);
+                    if (fieldErrors["bid_proposal"]) {
+                      setFieldErrors((prev) => {
+                        const n = { ...prev };
+                        delete n["bid_proposal"];
+                        return n;
+                      });
+                    }
+                  }}
                   placeholder="Explain why your firm is best suited for this construction project..."
-                  className="w-full rounded-xl border bg-background/60 p-3.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50 leading-relaxed"
+                  className={`w-full rounded-xl border bg-background/60 p-3.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50 leading-relaxed ${
+                    fieldErrors["bid_proposal"] ? "border-rose-500 ring-2 ring-rose-500/30" : ""
+                  }`}
                 />
+                {fieldErrors["bid_proposal"] && (
+                  <p className="text-[11px] font-bold text-rose-500">{fieldErrors["bid_proposal"]}</p>
+                )}
               </div>
 
               {/* Submit Button */}
@@ -308,7 +427,7 @@ export default function ContractorTenderDetailPage({ params }: { params: { id: s
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 px-8 py-3 text-xs font-extrabold text-white shadow-lg shadow-orange-600/30 hover:from-orange-700 hover:to-amber-700 disabled:opacity-50 transition-all"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 px-8 py-3 text-xs font-extrabold text-white shadow-lg shadow-orange-600/30 hover:from-orange-700 hover:to-amber-700 disabled:opacity-50 transition-all cursor-pointer"
                 >
                   {submitting ? "Submitting Bid..." : "Submit Bid"}
                 </button>

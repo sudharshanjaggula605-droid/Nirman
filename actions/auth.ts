@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export async function loginAction(formData: FormData) {
   const email = (formData.get("email") as string)?.trim();
@@ -123,54 +124,54 @@ export async function loginAction(formData: FormData) {
 
     const role = profile.role?.toLowerCase();
     const status = profile.status?.toLowerCase();
+    const redirectTo = (formData.get("redirectTo") as string)?.trim();
 
     console.log(`[AUTH LOGIN DEBUG] AUTH USER: ${data.user.id}`);
     console.log(`[AUTH LOGIN DEBUG] ROLE: ${role}`);
     console.log(`[AUTH LOGIN DEBUG] STATUS: ${status}`);
 
     if (status === "pending") {
-      console.log(`[AUTH LOGIN DEBUG] REDIRECT: /account-pending`);
-      redirect("/account-pending");
+      return { success: true, redirectUrl: "/account-pending" };
     }
     if (status === "rejected") {
-      console.log(`[AUTH LOGIN DEBUG] REDIRECT: /account-rejected`);
-      redirect("/account-rejected");
+      return { success: true, redirectUrl: "/account-rejected" };
     }
     if (status === "blocked") {
-      console.log(`[AUTH LOGIN DEBUG] REDIRECT: /account-blocked`);
-      redirect("/account-blocked");
+      return { success: true, redirectUrl: "/account-blocked" };
     }
 
     if (status === "approved") {
       if (role === "admin") {
-        console.log(`[AUTH LOGIN DEBUG] REDIRECT: /admin/dashboard`);
-        redirect("/admin/dashboard");
+        const dest = redirectTo && redirectTo.startsWith("/admin") ? redirectTo : "/admin/dashboard";
+        return { success: true, redirectUrl: dest };
       }
       if (role === "owner") {
-        console.log(`[AUTH LOGIN DEBUG] REDIRECT: /owner/dashboard`);
-        redirect("/owner/dashboard");
+        const dest = redirectTo && (redirectTo.startsWith("/owner") || redirectTo.startsWith("/tenders")) ? redirectTo : "/owner/dashboard";
+        return { success: true, redirectUrl: dest };
       }
       if (role === "contractor") {
-        console.log(`[AUTH LOGIN DEBUG] REDIRECT: /contractor/dashboard`);
-        redirect("/contractor/dashboard");
+        const dest = redirectTo && (redirectTo.startsWith("/contractor") || redirectTo.startsWith("/tenders")) ? redirectTo : "/contractor/dashboard";
+        return { success: true, redirectUrl: dest };
       }
     }
   }
 
-  redirect("/complete-profile");
+  return { success: true, redirectUrl: "/complete-profile" };
 }
 
-export async function registerOwnerAction(formData: FormData) {
-  const email = (formData.get("email") as string)?.trim();
-  const password = formData.get("password") as string;
-  const full_name = (formData.get("full_name") as string)?.trim();
-  const phone = (formData.get("phone") as string)?.trim();
-  const address = (formData.get("address") as string || formData.get("property_location") as string)?.trim();
-  const city = (formData.get("city") as string)?.trim();
-  const state = (formData.get("state") as string)?.trim();
-  const pincode = (formData.get("pincode") as string)?.trim();
+import { capitalizeWords, formatIndianPhoneNumber } from "@/lib/utils";
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mbljyfeoicpbptndgtcm.supabase.co";
+export async function registerOwnerAction(formData: FormData) {
+  const email = (formData.get("email") as string)?.trim().toLowerCase();
+  const password = formData.get("password") as string;
+  const first_name = capitalizeWords((formData.get("first_name") as string || "").trim());
+  const last_name = capitalizeWords((formData.get("last_name") as string || "").trim());
+  const full_name = (formData.get("full_name") as string)?.trim() || `${first_name} ${last_name}`.trim();
+  const phone = formatIndianPhoneNumber((formData.get("phone") as string)?.trim());
+  const address = capitalizeWords((formData.get("address") as string || formData.get("property_location") as string || "").trim());
+  const city = capitalizeWords((formData.get("city") as string || "").trim());
+  const state = capitalizeWords((formData.get("state") as string || "").trim());
+  const pincode = (formData.get("pincode") as string)?.trim();
 
   const supabase = createClient();
 
@@ -179,6 +180,8 @@ export async function registerOwnerAction(formData: FormData) {
     password,
     options: {
       data: {
+        first_name,
+        last_name,
         full_name,
         phone,
         role: "owner",
@@ -205,6 +208,8 @@ export async function registerOwnerAction(formData: FormData) {
     await adminClient.from("profiles").upsert(
       {
         id: data.user.id,
+        first_name: first_name || full_name,
+        last_name: last_name || "",
         full_name,
         email,
         phone: phone || null,
@@ -231,23 +236,31 @@ export async function registerOwnerAction(formData: FormData) {
       },
       { onConflict: "id" }
     );
+
+    revalidatePath("/admin/users");
+    revalidatePath("/admin/owners");
+    revalidatePath("/admin/approvals");
+    revalidatePath("/admin/dashboard");
   }
 
-  redirect("/account-pending?role=owner");
+  return { success: true, redirectUrl: "/account-pending?role=owner" };
 }
 
 export async function registerContractorAction(formData: FormData) {
-  const email = (formData.get("email") as string)?.trim();
+  const email = (formData.get("email") as string)?.trim().toLowerCase();
   const password = formData.get("password") as string;
-  const contact_person = (formData.get("contact_person") as string || formData.get("full_name") as string)?.trim();
-  const phone = (formData.get("phone") as string)?.trim();
-  const company_name = (formData.get("company_name") as string)?.trim();
-  const city = (formData.get("city") as string)?.trim();
-  const specialization = (formData.get("specialization") as string || formData.get("specializations") as string)?.trim() || "Residential & Civil Construction";
+  const first_name = capitalizeWords((formData.get("first_name") as string || "").trim());
+  const last_name = capitalizeWords((formData.get("last_name") as string || "").trim());
+  const contact_person = (formData.get("contact_person") as string || formData.get("full_name") as string || `${first_name} ${last_name}`).trim();
+  const full_name = contact_person;
+  const phone = formatIndianPhoneNumber((formData.get("phone") as string)?.trim());
+  const company_name = capitalizeWords((formData.get("company_name") as string || "").trim()) || contact_person;
+  const city = capitalizeWords((formData.get("city") as string || "").trim());
+  const specialization = capitalizeWords((formData.get("specialization") as string || formData.get("specializations") as string || "Residential & Civil Construction").trim());
   const years_of_experience = parseInt(formData.get("years_of_experience") as string || "0", 10);
+  const aadhaarNumber = (formData.get("aadhaar_number") as string || "").trim();
+  const identity_verification_status = aadhaarNumber ? "pending" : "pending";
   const projectPhotos = formData.getAll("project_photos").map((p) => p.toString()).filter(Boolean);
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mbljyfeoicpbptndgtcm.supabase.co";
 
   const supabase = createClient();
 
@@ -256,6 +269,8 @@ export async function registerContractorAction(formData: FormData) {
     password,
     options: {
       data: {
+        first_name,
+        last_name,
         full_name: contact_person,
         contact_person,
         company_name,
@@ -283,6 +298,8 @@ export async function registerContractorAction(formData: FormData) {
     await adminClient.from("profiles").upsert(
       {
         id: userId,
+        first_name: first_name || contact_person,
+        last_name: last_name || "",
         full_name: contact_person,
         email,
         phone: phone || null,
@@ -303,7 +320,7 @@ export async function registerContractorAction(formData: FormData) {
         city: city || null,
         years_of_experience,
         total_projects: 0,
-        description: `Specialized in ${specialization}. Operating in ${city || "India"}.`,
+        description: `Specialized in ${specialization}. Operating in ${city || "India"}. Identity verification: ${identity_verification_status}.`,
       },
       { onConflict: "id" }
     );
@@ -321,9 +338,14 @@ export async function registerContractorAction(formData: FormData) {
       }));
       await adminClient.from("contractor_portfolio").insert(portfolioInserts);
     }
+
+    revalidatePath("/admin/users");
+    revalidatePath("/admin/contractors");
+    revalidatePath("/admin/approvals");
+    revalidatePath("/admin/dashboard");
   }
 
-  redirect("/account-pending?role=contractor");
+  return { success: true, redirectUrl: "/account-pending?role=contractor" };
 }
 
 export async function registerAction(formData: FormData) {
@@ -332,4 +354,59 @@ export async function registerAction(formData: FormData) {
     return registerContractorAction(formData);
   }
   return registerOwnerAction(formData);
+}
+
+export async function changeUserPasswordAction(formData: FormData) {
+  try {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user || !user.email) {
+      return { error: "Authentication session expired. Please log in again." };
+    }
+
+    const currentPassword = (formData.get("current_password") as string || "").trim();
+    const newPassword = (formData.get("new_password") as string || "").trim();
+    const confirmPassword = (formData.get("confirm_password") as string || "").trim();
+
+    if (!currentPassword) {
+      return { error: "Current password is required.", field: "current_password" };
+    }
+
+    if (!newPassword) {
+      return { error: "New password is required.", field: "new_password" };
+    }
+
+    if (newPassword.length < 6) {
+      return { error: "New password must be at least 6 characters long.", field: "new_password" };
+    }
+
+    if (newPassword !== confirmPassword) {
+      return { error: "Passwords do not match.", field: "confirm_password" };
+    }
+
+    // 1. Verify current password securely against Supabase Auth credentials
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+
+    if (verifyError) {
+      return { error: "Current password is incorrect.", field: "current_password" };
+    }
+
+    // 2. Update password securely via Supabase Auth
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (updateError) {
+      return { error: updateError.message };
+    }
+
+    return { success: true, message: "Password changed successfully." };
+  } catch (err: any) {
+    console.error("Error changing password:", err);
+    return { error: err.message || "Failed to change password." };
+  }
 }

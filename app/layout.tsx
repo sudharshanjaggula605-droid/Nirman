@@ -84,7 +84,10 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/favicon.svg" />
         <link rel="apple-touch-icon" href="/favicon.svg" />
       </head>
-      <body className={`min-h-screen flex flex-col bg-background text-foreground antialiased font-sans ${inter.className}`}>
+      <body
+        suppressHydrationWarning
+        className={`min-h-screen flex flex-col bg-background text-foreground antialiased font-sans ${inter.className}`}
+      >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
         </ThemeProvider>

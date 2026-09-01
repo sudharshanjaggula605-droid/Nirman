@@ -93,7 +93,7 @@ export default async function TenderDetailsPage({ params }: TenderDetailsPagePro
                 {tender.project?.category?.name || "General Construction"}
               </span>
               <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-600 border border-emerald-500/20">
-                <ShieldCheck className="h-3.5 w-3.5" /> Status: {tender.status.toUpperCase()}
+                <ShieldCheck className="h-3.5 w-3.5" /> Status: {(tender.status || "ACTIVE").toUpperCase()}
               </span>
             </div>
 

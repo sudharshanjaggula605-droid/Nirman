@@ -30,6 +30,7 @@ import { getUnreadMessageCountAction } from "@/actions/messages";
 import { getUnreadNotificationCountAction } from "@/actions/notifications";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { dashboardSearchAction, type SearchResult } from "@/actions/search";
+import { LogoutModal } from "@/components/dashboard/logout-modal";
 
 interface DashboardHeaderProps {
   onMenuToggle?: () => void;
@@ -64,6 +65,7 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
   const [unreadNotifs, setUnreadNotifs] = useState(0);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Search state
@@ -204,8 +206,12 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
     };
   }, []);
 
-  const handleSignOut = async () => {
+  const handleSignOutClick = () => {
     setUserDropdownOpen(false);
+    setLogoutModalOpen(true);
+  };
+
+  const handleConfirmSignOut = async () => {
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
@@ -376,28 +382,6 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-        {/* Quick Language Switcher Dropdown - Desktop Only (Hidden on Mobile) */}
-        <div className="relative hidden md:flex items-center">
-          <label htmlFor="header-language-select" className="sr-only">
-            {t("header.select_language", "Select Language")}
-          </label>
-          <div className="relative flex items-center rounded-xl border bg-card px-2.5 py-1.5 text-xs font-semibold text-foreground shadow-sm hover:bg-accent transition-colors">
-            <Globe className="h-3.5 w-3.5 mr-1.5 text-orange-600 shrink-0" />
-            <select
-              id="header-language-select"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              aria-label="Select interface language"
-              className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer pr-1"
-            >
-              {languages.map((lang) => (
-                <option key={lang.code} value={lang.code} className="bg-popover text-popover-foreground">
-                  {lang.nativeName} ({lang.code.toUpperCase()})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
 
         {/* Messages */}
         <Link
@@ -504,7 +488,7 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
                 <div className="pt-1 mt-1 border-t">
                   <button
                     type="button"
-                    onClick={handleSignOut}
+                    onClick={handleSignOutClick}
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                   >
                     <LogOut className="h-4 w-4 text-destructive" />
@@ -516,6 +500,13 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
           </div>
         )}
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirm={handleConfirmSignOut}
+      />
     </header>
   );
 }

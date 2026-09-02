@@ -94,8 +94,10 @@ export default function ContractorMessagesPage() {
 
     let isSubscribed = true;
 
-    async function fetchChatMessages() {
-      setLoadingChat(true);
+    async function fetchChatMessages(silent = false) {
+      if (!silent) {
+        setLoadingChat(true);
+      }
       try {
         const res = await getConversationMessagesAction(selectedContact.id);
         if (isSubscribed && res.messages) {
@@ -107,13 +109,13 @@ export default function ContractorMessagesPage() {
       } catch (err) {
         console.error("Error loading chat messages:", err);
       } finally {
-        if (isSubscribed) setLoadingChat(false);
+        if (isSubscribed && !silent) setLoadingChat(false);
       }
     }
 
-    fetchChatMessages();
+    fetchChatMessages(false);
 
-    // Supabase Real-time listener
+    // Supabase Real-time listener for instant incoming messages
     const channel = supabase
       .channel(`contractor_chat_${currentUserId}_${selectedContact.id}`)
       .on(
@@ -124,14 +126,14 @@ export default function ContractorMessagesPage() {
           table: "messages",
         },
         () => {
-          fetchChatMessages();
+          fetchChatMessages(true);
         }
       )
       .subscribe();
 
     const interval = setInterval(() => {
-      fetchChatMessages();
-    }, 3000);
+      fetchChatMessages(true);
+    }, 4000);
 
     return () => {
       isSubscribed = false;
@@ -143,7 +145,21 @@ export default function ContractorMessagesPage() {
               {/* Chat Thread */}
               <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4">
                 {loadingChat && messages.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-muted-foreground">Loading chat messages...</div>
+                  <div className="space-y-4 p-4 animate-pulse">
+                    <div className="flex items-start gap-3">
+                      <div className="h-8 w-8 rounded-full bg-muted shrink-0" />
+                      <div className="space-y-2 max-w-[70%]">
+                        <div className="h-4 w-32 bg-muted rounded-md" />
+                        <div className="h-12 w-64 bg-muted rounded-2xl" />
+                      </div>
+                    </div>
+                    <div className="flex items-end justify-end gap-3">
+                      <div className="space-y-2 max-w-[70%] flex flex-col items-end">
+                        <div className="h-4 w-24 bg-muted rounded-md" />
+                        <div className="h-10 w-52 bg-amber-500/20 rounded-2xl" />
+                      </div>
+                    </div>
+                  </div>
                 ) : messages.length > 0 ? (
                   messages.map((m) => {
                     const isSelf = m.sender_id === currentUserId;
@@ -316,12 +332,12 @@ export default function ContractorMessagesPage() {
   return (
     <div className="space-y-6 pb-12">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+      <div className="flex items-center justify-between gap-4 border-b pb-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
-            <MessageSquare className="h-6 w-6 text-amber-600" /> Contractor Communication Console
+            <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" /> Contractor Communication Console
           </h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">
             Direct real-time communication with NIRMAN Admin Support and Property Owners.
           </p>
         </div>

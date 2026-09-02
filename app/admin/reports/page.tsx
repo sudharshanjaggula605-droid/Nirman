@@ -15,6 +15,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 
 export default function AdminReportsPage() {
+  const [mounted, setMounted] = useState(false);
   const [stats, setStats] = useState({
     totalOwners: 0,
     totalContractors: 0,
@@ -27,6 +28,7 @@ export default function AdminReportsPage() {
   const supabase = createClient();
 
   useEffect(() => {
+    setMounted(true);
     async function loadReportStats() {
       try {
         const { data: profiles } = await supabase.from("profiles").select("*");
@@ -115,17 +117,21 @@ export default function AdminReportsPage() {
               <p className="text-xs text-slate-400">Property Owners vs Licensed Contractors</p>
             </div>
           </div>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyActivityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
-                <YAxis stroke="#94a3b8" fontSize={11} />
-                <Tooltip contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "12px", fontSize: "12px" }} />
-                <Bar dataKey="owners" name="Owners" fill="#f97316" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="contractors" name="Contractors" fill="#d97706" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-64 w-full flex items-center justify-center">
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyActivityData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
+                  <YAxis stroke="#94a3b8" fontSize={11} />
+                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "12px", fontSize: "12px" }} />
+                  <Bar dataKey="owners" name="Owners" fill="#f97316" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="contractors" name="Contractors" fill="#d97706" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full bg-slate-950/50 rounded-xl animate-pulse" />
+            )}
           </div>
         </div>
 
@@ -136,17 +142,21 @@ export default function AdminReportsPage() {
               <p className="text-xs text-slate-400">Marketplace activity & bidding volume</p>
             </div>
           </div>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={monthlyActivityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
-                <YAxis stroke="#94a3b8" fontSize={11} />
-                <Tooltip contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "12px", fontSize: "12px" }} />
-                <Area type="monotone" dataKey="bids" name="Bids Submitted" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.2} />
-                <Area type="monotone" dataKey="tenders" name="Tenders Published" stroke="#10b981" fill="#10b981" fillOpacity={0.2} />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="h-64 w-full flex items-center justify-center">
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyActivityData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
+                  <YAxis stroke="#94a3b8" fontSize={11} />
+                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "12px", fontSize: "12px" }} />
+                  <Area type="monotone" dataKey="bids" name="Bids Submitted" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.2} />
+                  <Area type="monotone" dataKey="tenders" name="Tenders Published" stroke="#10b981" fill="#10b981" fillOpacity={0.2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full bg-slate-950/50 rounded-xl animate-pulse" />
+            )}
           </div>
         </div>
       </div>

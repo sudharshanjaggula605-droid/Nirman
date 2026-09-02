@@ -102,8 +102,10 @@ export default function AdminMessagesPage() {
   useEffect(() => {
     let isSubscribed = true;
 
-    async function fetchChatMessages() {
-      setLoadingChat(true);
+    async function fetchChatMessages(silent = false) {
+      if (!silent) {
+        setLoadingChat(true);
+      }
       try {
         const res = await getAdminMessagesAction({
           viewMode,
@@ -122,11 +124,11 @@ export default function AdminMessagesPage() {
       } catch (err) {
         console.error("Error loading admin chat messages:", err);
       } finally {
-        if (isSubscribed) setLoadingChat(false);
+        if (isSubscribed && !silent) setLoadingChat(false);
       }
     }
 
-    fetchChatMessages();
+    fetchChatMessages(false);
 
     // Supabase Realtime channel listener
     const channel = supabase
@@ -139,14 +141,14 @@ export default function AdminMessagesPage() {
           table: "messages",
         },
         () => {
-          fetchChatMessages();
+          fetchChatMessages(true);
         }
       )
       .subscribe();
 
     const interval = setInterval(() => {
-      fetchChatMessages();
-    }, 3000);
+      fetchChatMessages(true);
+    }, 4000);
 
     return () => {
       isSubscribed = false;
@@ -158,7 +160,21 @@ export default function AdminMessagesPage() {
           {/* Messages Thread */}
           <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-slate-800 bg-slate-950/30">
             {loadingChat && messages.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-500">Loading synchronized conversation history...</div>
+              <div className="space-y-4 p-4 animate-pulse">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-full bg-slate-800 shrink-0" />
+                  <div className="space-y-2 max-w-[70%]">
+                    <div className="h-4 w-32 bg-slate-800 rounded-md" />
+                    <div className="h-12 w-64 bg-slate-800 rounded-2xl" />
+                  </div>
+                </div>
+                <div className="flex items-end justify-end gap-3">
+                  <div className="space-y-2 max-w-[70%] flex flex-col items-end">
+                    <div className="h-4 w-24 bg-slate-800 rounded-md" />
+                    <div className="h-10 w-52 bg-slate-800 rounded-2xl" />
+                  </div>
+                </div>
+              </div>
             ) : messages.length > 0 ? (
               messages.map((m) => {
                 const sender = getSenderDetails(m.sender_id);

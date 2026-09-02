@@ -51,9 +51,35 @@ export function ContactSection() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submittedRequestId, setSubmittedRequestId] = useState<string | null>(null);
+  const [isCardInView, setIsCardInView] = useState(true);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const formCardRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
+
+  useEffect(() => {
+    if (typeof window === "undefined" || window.innerWidth >= 768) return;
+
+    if (typeof CSS !== "undefined" && CSS.supports && CSS.supports("animation-timeline", "view()")) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsCardInView(entry.isIntersecting);
+      },
+      {
+        threshold: [0.1, 0.4, 0.8],
+        rootMargin: "-6% 0px -6% 0px",
+      }
+    );
+
+    if (formCardRef.current) {
+      observer.observe(formCardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     async function loadCurrentUser() {
@@ -176,24 +202,29 @@ export function ContactSection() {
   };
 
   return (
-    <section id="contact" className="border-t bg-gradient-to-b from-background via-muted/20 to-background py-16 sm:py-24">
+    <section id="contact" className="border-t bg-gradient-to-b from-background via-muted/20 to-background py-10 sm:py-24">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto space-y-10">
+        <div className="max-w-4xl mx-auto space-y-6 sm:space-y-10">
           {/* Section Header */}
-          <div className="text-center space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-3.5 py-1.5 text-xs font-bold text-orange-600 dark:text-orange-400">
+          <div className="text-center space-y-1 sm:space-y-3">
+            <div className="hidden sm:inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-3.5 py-1.5 text-xs font-bold text-orange-600 dark:text-orange-400">
               <HelpCircle className="h-4 w-4" /> Customer & Support Center
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+            <h2 className="text-xl sm:text-4xl font-extrabold text-foreground tracking-tight">
               Contact NIRMAN Support
             </h2>
-            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
+            <p className="hidden sm:block text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
               Have questions or need assistance with construction tenders, payments, or account registration? Send us a request.
             </p>
           </div>
 
           {/* Card Container */}
-          <div className="rounded-3xl border bg-card text-card-foreground p-6 sm:p-10 shadow-xl relative overflow-hidden">
+          <div
+            ref={formCardRef}
+            className={`phonepe-support-card rounded-3xl border bg-card text-card-foreground p-4 sm:p-10 shadow-xl relative overflow-hidden transition-all duration-500 ease-out will-change-transform ${
+              isCardInView ? "scale-100 opacity-100" : "scale-[0.96] opacity-90"
+            } md:scale-100 md:opacity-100`}
+          >
             {submittedRequestId ? (
               /* Success State Display */
               <div className="py-8 text-center space-y-6 animate-in fade-in zoom-in duration-300">
@@ -390,11 +421,11 @@ export function ContactSection() {
                 </div>
 
                 {/* Submit Action */}
-                <div className="pt-4 flex justify-end">
+                <div className="pt-4 flex justify-center sm:justify-end">
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="inline-flex items-center gap-2 rounded-xl bg-orange-700 px-8 py-3.5 text-xs font-extrabold text-white shadow-lg shadow-orange-700/30 hover:bg-orange-800 disabled:opacity-50 transition-all cursor-pointer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-orange-700 px-8 py-3.5 text-xs font-extrabold text-white shadow-lg shadow-orange-700/30 hover:bg-orange-800 disabled:opacity-50 transition-all cursor-pointer"
                   >
                     {submitting ? (
                       <>

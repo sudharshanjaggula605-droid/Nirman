@@ -91,8 +91,8 @@ export default function ContractorSettingsPage() {
   return (
     <div className="space-y-6 max-w-4xl pb-12">
       <div className="border-b pb-4">
-        <h1 className="text-2xl font-bold text-foreground">{t("settings.title", "Account & Security Settings")}</h1>
-        <p className="text-xs text-muted-foreground">{t("settings.subtitle", "Manage language preference, password, notification preferences, and security settings")}</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t("settings.title", "Account & Security Settings")}</h1>
+        <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">{t("settings.subtitle", "Manage language preference, password, notification preferences, and security settings")}</p>
       </div>
 
       <div className="rounded-2xl border bg-card p-6 space-y-8 shadow-sm text-xs">
@@ -115,7 +115,7 @@ export default function ContractorSettingsPage() {
             </span>
           </div>
 
-          <p className="text-xs text-muted-foreground leading-relaxed">
+          <p className="hidden sm:block text-xs text-muted-foreground leading-relaxed">
             {t("settings.language_section_desc", "Choose your preferred language. The dashboard menus, buttons, labels, and notifications will update automatically across all pages and persist upon login.")}
           </p>
 
@@ -271,21 +271,23 @@ export default function ContractorSettingsPage() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={passwordLoading}
-              className="inline-flex items-center gap-2 rounded-xl bg-orange-700 px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-800 disabled:opacity-50 transition-all cursor-pointer"
-            >
-              {passwordLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Verifying & Updating...
-                </>
-              ) : (
-                <>
-                  <Key className="h-4 w-4" /> Change Password
-                </>
-              )}
-            </button>
+            <div className="flex justify-center sm:justify-start pt-1">
+              <button
+                type="submit"
+                disabled={passwordLoading}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-orange-700 px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-800 disabled:opacity-50 transition-all cursor-pointer"
+              >
+                {passwordLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Verifying & Updating...
+                  </>
+                ) : (
+                  <>
+                    <Key className="h-4 w-4" /> Change Password
+                  </>
+                )}
+              </button>
+            </div>
           </form>
         </div>
 
@@ -313,11 +315,11 @@ export default function ContractorSettingsPage() {
         </div>
 
         {/* Save Actions */}
-        <div className="pt-4 border-t flex justify-end">
+        <div className="pt-4 border-t flex justify-center sm:justify-end">
           <button
             type="button"
             onClick={handleSavePreferences}
-            className="inline-flex items-center gap-2 rounded-xl bg-orange-700 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-orange-700/30 hover:bg-orange-800 transition-all cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-orange-700 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-orange-700/30 hover:bg-orange-800 transition-all cursor-pointer"
           >
             <Save className="h-4 w-4" />
             <span>{t("settings.save_btn", "Save Preferences")}</span>

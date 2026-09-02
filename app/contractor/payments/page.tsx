@@ -67,15 +67,15 @@ export default function ContractorPaymentsPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Payments & Invoicing</h1>
-          <p className="text-xs text-muted-foreground">View payment history and submit milestone invoice requests to property owners</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Payments & Invoicing</h1>
+          <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">View payment history and submit milestone invoice requests to property owners</p>
         </div>
 
         <button
           onClick={() => setShowInvoiceModal(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700 w-full sm:w-auto"
         >
           <CreditCard className="h-4 w-4" /> Request Milestone Payment
         </button>

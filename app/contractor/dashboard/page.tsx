@@ -227,9 +227,9 @@ export default function ContractorDashboardPage() {
           <div className="flex items-center justify-between border-b pb-3">
             <div>
               <h2 className="text-base font-extrabold text-foreground">Available Tenders</h2>
-              <p className="text-xs text-muted-foreground">Latest construction requirements looking for contractor bids</p>
+              <p className="hidden sm:block text-xs text-muted-foreground">Latest construction requirements looking for contractor bids</p>
             </div>
-            <Link href="/contractor/tenders" className="text-xs font-bold text-orange-600 hover:underline">
+            <Link href="/contractor/tenders" className="text-xs font-bold text-orange-600 hover:underline shrink-0">
               Explore All →
             </Link>
           </div>

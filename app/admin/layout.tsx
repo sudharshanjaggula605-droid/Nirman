@@ -8,11 +8,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-slate-900 text-slate-100">
+    <div className="flex h-screen max-h-screen w-full overflow-hidden bg-slate-900 text-slate-100">
       <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex flex-1 flex-col overflow-x-hidden">
+      <div className="flex flex-1 flex-col h-screen min-w-0 overflow-hidden">
         <DashboardHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} title="Admin Portal" />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-slate-900">{children}</main>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 bg-slate-900 scroll-smooth">
+          {children}
+        </main>
       </div>
     </div>
   );

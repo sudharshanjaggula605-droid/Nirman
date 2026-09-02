@@ -4,7 +4,70 @@ export type ProjectStatus = 'draft' | 'tender' | 'awarded' | 'active' | 'complet
 export type TenderStatus = 'draft' | 'active' | 'closing_soon' | 'closed' | 'awarded' | 'cancelled' | 'completed';
 export type BidStatus = 'pending' | 'under_review' | 'accepted' | 'rejected' | 'withdrawn';
 export type MilestoneStatus = 'pending' | 'in_progress' | 'completed' | 'delayed';
-export type PaymentStatus = 'pending' | 'requested' | 'approved' | 'paid' | 'rejected' | 'cancelled';
+export type PaymentStatus =
+  | 'CREATED'
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'PAID'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'REFUNDED'
+  | 'PENDING_VERIFICATION'
+  | 'DISPUTED'
+  | 'pending'
+  | 'paid'
+  | 'rejected'
+  | 'approved';
+
+export type PaymentType = 'CONTRACTOR_SELECTION_FEE' | 'PROJECT_MILESTONE' | 'ESCROW_DEPOSIT';
+export type PaymentMethod = 'qr' | 'upi' | 'card' | 'netbanking' | 'static_qr' | 'wallet' | 'other';
+
+export interface PaymentRecord {
+  id: string;
+  project_id: string;
+  owner_id: string;
+  contractor_id: string;
+  tender_id?: string | null;
+  bid_id?: string | null;
+  payment_type: PaymentType | string;
+  amount: number;
+  currency: string;
+  payment_method?: PaymentMethod | string | null;
+  payment_gateway?: string;
+  gateway_order_id?: string | null;
+  gateway_payment_id?: string | null;
+  gateway_signature?: string | null;
+  status: PaymentStatus;
+  failure_reason?: string | null;
+  paid_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  project?: Project;
+  owner?: OwnerProfile;
+  contractor?: ContractorProfile;
+}
+
+export interface ContractorSelectionRecord {
+  id: string;
+  project_id: string;
+  tender_id: string;
+  owner_id: string;
+  contractor_id: string;
+  bid_id: string;
+  payment_id?: string | null;
+  selection_status: 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED';
+  selected_at?: string | null;
+  created_at: string;
+}
+
+export interface PaymentSettingsConfig {
+  razorpay_enabled: boolean;
+  static_qr_enabled: boolean;
+  static_qr_image: string;
+  upi_id: string;
+  display_name: string;
+  payment_instructions: string;
+}
 
 export interface Profile {
   id: string;

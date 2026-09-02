@@ -65,13 +65,18 @@ export default function ContractorFindTendersPage() {
   return (
     <div className="space-y-8 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+      <div className="flex items-center justify-between gap-4 border-b pb-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Construction Tender Marketplace</h1>
-          <p className="text-xs text-muted-foreground">Discover live tenders posted by property owners across India and submit itemized BOQ bids.</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">Construction Tender Marketplace</h1>
+            <span className="sm:hidden text-[11px] font-bold px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-600 border border-orange-500/20 shrink-0">
+              {sortedTenders.length} Active
+            </span>
+          </div>
+          <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">Discover live tenders posted by property owners across India and submit itemized BOQ bids.</p>
         </div>
 
-        <div className="text-xs text-muted-foreground">
+        <div className="hidden sm:block text-xs text-muted-foreground shrink-0">
           Showing <span className="font-extrabold text-foreground">{sortedTenders.length}</span> active tenders
         </div>
       </div>

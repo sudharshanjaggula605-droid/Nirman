@@ -107,10 +107,6 @@ export async function sendMessageAction(
       return { error: insertErr.message };
     }
 
-    revalidatePath("/owner/messages");
-    revalidatePath("/contractor/messages");
-    revalidatePath("/admin/messages");
-
     return {
       success: true,
       message: {
@@ -355,10 +351,6 @@ export async function markMessagesAsReadAction(otherUserId: string) {
       .update({ is_read: true })
       .eq("sender_id", otherUserId)
       .eq("receiver_id", user.id);
-
-    revalidatePath("/owner/messages");
-    revalidatePath("/contractor/messages");
-    revalidatePath("/admin/messages");
 
     return { success: true };
   } catch (err: any) {

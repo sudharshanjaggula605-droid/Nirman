@@ -41,17 +41,17 @@ export default function OwnerProjectsPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-foreground tracking-tight">My Construction Projects</h1>
-          <p className="text-xs text-muted-foreground">Manage and track your property construction projects.</p>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">My Construction Projects</h1>
+          <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">Manage and track your property construction projects.</p>
         </div>
 
         <Link
           href="/owner/projects/new"
-          className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-700 transition-all shrink-0"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 sm:px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-700 transition-all w-full sm:w-auto shrink-0"
         >
-          <PlusCircle className="h-4 w-4" /> Post New Project
+          <PlusCircle className="h-4 w-4" /> Post Project
         </Link>
       </div>
 

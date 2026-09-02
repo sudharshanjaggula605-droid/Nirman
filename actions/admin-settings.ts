@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { type PaymentSettingsConfig } from "@/types";
 
 export interface NotificationPreferences {
   new_owner_registration: boolean;
@@ -69,6 +70,14 @@ const DEFAULT_SETTINGS = {
     maintenance_mode: false,
     system_status: "operational" as const,
   },
+  payment_settings: {
+    razorpay_enabled: true,
+    static_qr_enabled: true,
+    static_qr_image: "/images/static_upi_qr.png",
+    upi_id: "nirman@upi",
+    display_name: "NIRMAN Technologies Pvt Ltd",
+    payment_instructions: "Scan using GPay, PhonePe, Paytm, or BHIM UPI app to pay ₹199.",
+  },
 };
 
 // Helper to verify caller is admin
@@ -102,6 +111,7 @@ export async function getAdminFullSettingsAction(): Promise<{
   userManagement: UserManagementSettings;
   tenderManagement: TenderManagementSettings;
   systemSettings: SystemSettings;
+  paymentSettings: PaymentSettingsConfig;
   error?: string;
 }> {
   try {
@@ -114,6 +124,7 @@ export async function getAdminFullSettingsAction(): Promise<{
         userManagement: DEFAULT_SETTINGS.user_management_settings,
         tenderManagement: DEFAULT_SETTINGS.tender_management_settings,
         systemSettings: DEFAULT_SETTINGS.system_settings,
+        paymentSettings: DEFAULT_SETTINGS.payment_settings,
       };
     }
 
@@ -141,6 +152,7 @@ export async function getAdminFullSettingsAction(): Promise<{
     let userManagement = { ...DEFAULT_SETTINGS.user_management_settings };
     let tenderManagement = { ...DEFAULT_SETTINGS.tender_management_settings };
     let systemSettings = { ...DEFAULT_SETTINGS.system_settings };
+    let paymentSettings = { ...DEFAULT_SETTINGS.payment_settings };
 
     try {
       const { data: settingsRow } = await adminClient
@@ -161,18 +173,10 @@ export async function getAdminFullSettingsAction(): Promise<{
         }
         if (settingsRow.system_settings) {
           systemSettings = { ...systemSettings, ...settingsRow.system_settings };
+          if (settingsRow.system_settings.payment_settings) {
+            paymentSettings = { ...paymentSettings, ...settingsRow.system_settings.payment_settings };
+          }
         }
-      } else {
-        // Create initial default row
-        await adminClient.from("admin_settings").upsert({
-          id: "default",
-          admin_id: user.id,
-          notification_preferences: notifications,
-          user_management_settings: userManagement,
-          tender_management_settings: tenderManagement,
-          system_settings: systemSettings,
-          updated_at: new Date().toISOString(),
-        });
       }
     } catch (dbErr) {
       console.warn("admin_settings table query note:", dbErr);
@@ -185,6 +189,7 @@ export async function getAdminFullSettingsAction(): Promise<{
       userManagement,
       tenderManagement,
       systemSettings,
+      paymentSettings,
     };
   } catch (err: any) {
     console.error("Error in getAdminFullSettingsAction:", err);
@@ -195,6 +200,7 @@ export async function getAdminFullSettingsAction(): Promise<{
       userManagement: DEFAULT_SETTINGS.user_management_settings,
       tenderManagement: DEFAULT_SETTINGS.tender_management_settings,
       systemSettings: DEFAULT_SETTINGS.system_settings,
+      paymentSettings: DEFAULT_SETTINGS.payment_settings,
     };
   }
 }
@@ -468,5 +474,62 @@ export async function getAdminSecurityAuditAction(): Promise<{
   } catch (err: any) {
     console.error("Error in getAdminSecurityAuditAction:", err);
     return { success: false, logs: [] };
+  }
+}
+
+export async function updateAdminPaymentSettingsAction(
+  paymentSettings: PaymentSettingsConfig
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const { error: authError, user } = await verifyAdminCaller();
+    if (authError || !user) return { success: false, error: authError || "Unauthorized" };
+
+    if (!paymentSettings.upi_id?.trim()) {
+      return { success: false, error: "Please provide a valid UPI ID (e.g., nirman@upi)." };
+    }
+
+    const adminClient = createAdminClient();
+
+    // Fetch existing system_settings
+    const { data: existing } = await adminClient
+      .from("admin_settings")
+      .select("system_settings")
+      .eq("id", "default")
+      .maybeSingle();
+
+    const currentSystem = existing?.system_settings || {};
+    const updatedSystem = {
+      ...currentSystem,
+      payment_settings: paymentSettings,
+    };
+
+    const { error } = await adminClient.from("admin_settings").upsert({
+      id: "default",
+      admin_id: user.id,
+      system_settings: updatedSystem,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.error("Error updating payment settings:", error);
+      return { success: false, error: "Unable to save payment settings." };
+    }
+
+    // Log admin action
+    await adminClient.from("admin_actions").insert({
+      admin_id: user.id,
+      action: "payment_settings_updated",
+      reason: `Admin updated payment configuration (Razorpay: ${paymentSettings.razorpay_enabled}, Static QR: ${paymentSettings.static_qr_enabled})`,
+    });
+
+    revalidatePath("/admin/settings");
+    revalidatePath("/admin/payments");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error in updateAdminPaymentSettingsAction:", err);
+    return { success: false, error: "Unable to save payment settings." };
   }
 }

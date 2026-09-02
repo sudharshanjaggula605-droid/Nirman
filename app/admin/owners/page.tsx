@@ -35,20 +35,28 @@ export default function AdminOwnerApprovalsPage() {
 
   const handleApprove = async (id: string) => {
     setMessage(null);
+    // Instant optimistic update
+    setOwners((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, status: "approved" } : o))
+    );
     const res = await approveUserAction(id);
     if (res?.error) {
       setMessage("Error approving user: " + res.error);
-    } else {
-      const deliveryInfo = res?.channelSummary ? ` (${res.channelSummary})` : "";
-      setMessage(`Owner approved successfully!${deliveryInfo}`);
+      // Revert on error
       setOwners((prev) =>
-        prev.map((o) => (o.id === id ? { ...o, status: "approved" } : o))
+        prev.map((o) => (o.id === id ? { ...o, status: "pending" } : o))
       );
+    } else {
+      setMessage("Owner approved successfully!");
     }
   };
 
   const handleReject = async (id: string) => {
     setMessage(null);
+    // Instant optimistic update
+    setOwners((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, status: "rejected" } : o))
+    );
     try {
       const { error } = await supabase
         .from("profiles")
@@ -57,11 +65,12 @@ export default function AdminOwnerApprovalsPage() {
 
       if (error) {
         setMessage("Error rejecting owner: " + error.message);
+        // Revert on error
+        setOwners((prev) =>
+          prev.map((o) => (o.id === id ? { ...o, status: "pending" } : o))
+        );
       } else {
         setMessage("Owner application rejected.");
-        setOwners((prev) =>
-          prev.map((o) => (o.id === id ? { ...o, status: "rejected" } : o))
-        );
       }
     } catch (err: any) {
       setMessage("Error: " + err.message);
@@ -70,15 +79,19 @@ export default function AdminOwnerApprovalsPage() {
 
   const handleDeleteConfirm = async () => {
     if (!userToDelete) return;
+    const targetId = userToDelete.id;
     setMessage(null);
-    const res = await deleteUserAction(userToDelete.id);
+    // Optimistic removal
+    setOwners((prev) => prev.filter((o) => o.id !== targetId));
+    setUserToDelete(null);
+
+    const res = await deleteUserAction(targetId);
     if (res?.error) {
       setMessage("Error deleting owner: " + res.error);
+      fetchOwners(); // Refresh to restore on failure
     } else {
       setMessage("Owner account permanently deleted.");
-      setOwners((prev) => prev.filter((o) => o.id !== userToDelete.id));
     }
-    setUserToDelete(null);
   };
 
   return (

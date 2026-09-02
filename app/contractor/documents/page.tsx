@@ -65,15 +65,15 @@ export default function ContractorDocumentsPage() {
 
   return (
     <div className="space-y-6 pb-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Project Document Repository</h1>
-          <p className="text-xs text-muted-foreground">Manage contracts, architectural drawings, invoices, and site approvals</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Project Document Repository</h1>
+          <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">Manage contracts, architectural drawings, invoices, and site approvals</p>
         </div>
 
         <button
           onClick={() => setShowUploadModal(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700 w-full sm:w-auto"
         >
           <Upload className="h-4 w-4" /> Upload Document
         </button>

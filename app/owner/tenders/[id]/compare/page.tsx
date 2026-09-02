@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ShieldCheck, Layers } from "lucide-react";
 import Link from "next/link";
 import { BidComparisonTable } from "@/components/bid-comparison-table";
-import { acceptBidAction } from "@/actions/bids";
+import { ContractorSelectionModal } from "@/components/payments/contractor-selection-modal";
+import { PaymentCheckoutModal } from "@/components/payments/payment-checkout-modal";
 import { createClient } from "@/lib/supabase/client";
+import { type CreateOrderResult } from "@/actions/payments";
 
 interface CompareBidsPageProps {
   params: { id: string };
@@ -14,42 +16,64 @@ interface CompareBidsPageProps {
 
 export default function CompareBidsPage({ params }: CompareBidsPageProps) {
   const router = useRouter();
+  const [tender, setTender] = useState<any>(null);
   const [bids, setBids] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Modals state
+  const [selectedBidForPayment, setSelectedBidForPayment] = useState<any>(null);
+  const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [orderData, setOrderData] = useState<CreateOrderResult | null>(null);
+
   const supabase = createClient();
 
   useEffect(() => {
-    async function loadBids() {
-      const { data } = await supabase
-        .from("bids")
-        .select(`
-          *,
-          contractor:contractors(*),
-          cost_breakdown:bid_cost_breakdowns(*)
-        `)
-        .eq("tender_id", params.id);
+    async function loadData() {
+      try {
+        const { data: tenderData } = await supabase
+          .from("tenders")
+          .select("*, project:projects(*)")
+          .eq("id", params.id)
+          .single();
 
-      if (data) {
-        const formatted = data.map((b: any) => ({
-          ...b,
-          cost_breakdown: Array.isArray(b.cost_breakdown) ? b.cost_breakdown[0] : b.cost_breakdown,
-        }));
-        setBids(formatted);
+        if (tenderData) setTender(tenderData);
+
+        const { data } = await supabase
+          .from("bids")
+          .select(`
+            *,
+            contractor:contractors(*),
+            cost_breakdown:bid_cost_breakdowns(*)
+          `)
+          .eq("tender_id", params.id);
+
+        if (data) {
+          const formatted = data.map((b: any) => ({
+            ...b,
+            cost_breakdown: Array.isArray(b.cost_breakdown) ? b.cost_breakdown[0] : b.cost_breakdown,
+          }));
+          setBids(formatted);
+        }
+      } catch (err) {
+        console.error("Error loading comparison data:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
 
-    loadBids();
+    loadData();
   }, [params.id]);
 
-  const handleAcceptBid = async (bidId: string) => {
-    const result = await acceptBidAction(bidId);
-    if (result.success) {
-      router.push("/owner/dashboard");
-      router.refresh();
-    } else if (result.error) {
-      alert(`Error accepting bid: ${result.error}`);
-    }
+  const handleSelectBid = (bid: any) => {
+    setSelectedBidForPayment(bid);
+    setIsSelectionModalOpen(true);
+  };
+
+  const handleProceedToPayment = (createdOrder: CreateOrderResult) => {
+    setOrderData(createdOrder);
+    setIsSelectionModalOpen(false);
+    setIsCheckoutModalOpen(true);
   };
 
   return (
@@ -64,7 +88,7 @@ export default function CompareBidsPage({ params }: CompareBidsPageProps) {
           </Link>
           <h1 className="text-2xl font-bold text-foreground">Side-by-Side Contractor Bid Comparison</h1>
           <p className="text-xs text-muted-foreground">
-            Compare quotations, timelines, contractor experience, and cost breakdowns side-by-side.
+            Compare quotations, timelines, contractor experience, and cost breakdowns for {tender?.title || "Tender"}.
           </p>
         </div>
       </div>
@@ -74,8 +98,26 @@ export default function CompareBidsPage({ params }: CompareBidsPageProps) {
           Loading comparison data...
         </div>
       ) : (
-        <BidComparisonTable bids={bids} onAcceptBid={handleAcceptBid} />
+        <BidComparisonTable bids={bids} onSelectBid={handleSelectBid} />
       )}
+
+      {/* Confirmation & Payment Modals */}
+      {selectedBidForPayment && (
+        <ContractorSelectionModal
+          isOpen={isSelectionModalOpen}
+          onClose={() => setIsSelectionModalOpen(false)}
+          tenderId={params.id}
+          bid={selectedBidForPayment}
+          projectTitle={tender?.title || "Construction Project"}
+          onProceedToPayment={handleProceedToPayment}
+        />
+      )}
+
+      <PaymentCheckoutModal
+        isOpen={isCheckoutModalOpen}
+        onClose={() => setIsCheckoutModalOpen(false)}
+        orderData={orderData}
+      />
     </div>
   );
 }

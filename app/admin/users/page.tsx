@@ -132,13 +132,16 @@ export default function AdminUserManagementPage() {
   const handleApprove = async (id: string) => {
     setActionLoadingId(id);
     setMessage(null);
+    // Instant optimistic update
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: "approved" } : u)));
+
     const res = await approveUserAction(id);
     if (res?.error) {
       setMessage({ text: "Error approving user: " + res.error, type: "error" });
+      // Revert on error
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: "pending" } : u)));
     } else {
-      const deliveryInfo = res?.channelSummary ? ` (${res.channelSummary})` : "";
-      setMessage({ text: `User account approved successfully!${deliveryInfo}`, type: "success" });
-      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: "approved" } : u)));
+      setMessage({ text: "User account approved successfully!", type: "success" });
     }
     setActionLoadingId(null);
   };
@@ -146,30 +149,39 @@ export default function AdminUserManagementPage() {
   const handleStatusChange = async (id: string, newStatus: string) => {
     setActionLoadingId(id);
     setMessage(null);
+    const oldStatus = users.find((u) => u.id === id)?.status || "pending";
+    // Instant optimistic update
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: newStatus } : u)));
+
     const res = await setUserStatusAction(id, newStatus);
     if (res?.error) {
       setMessage({ text: "Error updating status: " + res.error, type: "error" });
+      // Revert on error
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: oldStatus } : u)));
     } else {
       setMessage({
         text: `User status changed to ${newStatus.toUpperCase()}.`,
         type: "success",
       });
-      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: newStatus } : u)));
     }
     setActionLoadingId(null);
   };
 
   const handleDeleteConfirm = async () => {
     if (!userToDelete) return;
+    const targetId = userToDelete.id;
     setMessage(null);
-    const res = await deleteUserAction(userToDelete.id);
+    // Instant optimistic deletion
+    setUsers((prev) => prev.filter((u) => u.id !== targetId));
+    setUserToDelete(null);
+
+    const res = await deleteUserAction(targetId);
     if (res?.error) {
       setMessage({ text: "Error deleting user: " + res.error, type: "error" });
+      fetchAllUsers(true);
     } else {
       setMessage({ text: "User account permanently deleted.", type: "success" });
-      setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
     }
-    setUserToDelete(null);
   };
 
   return (

@@ -117,118 +117,161 @@ export default function HomePage() {
   });
 
   return (
-    <div className="space-y-16 pb-16">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden border-b bg-gradient-to-b from-orange-500/10 via-background to-background py-20 lg:py-28">
-        <div className="container mx-auto px-4 sm:px-6 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Left Content */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-3.5 py-1.5 text-xs font-bold text-orange-600 dark:text-orange-400">
-                <ShieldCheck className="h-4 w-4" /> Verified Construction Marketplace
-              </div>
-
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.15]">
-                Build Better. <br />
-                <span className="bg-gradient-to-r from-orange-600 to-amber-500 bg-clip-text text-transparent">
-                  Find the Right Contractor.
-                </span>
-              </h1>
-
-              <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                NIRMAN connects property owners with trusted contractors through a transparent construction tender marketplace.
-              </p>
-
-              {/* Hero Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-2">
-                <Link
-                  href="/register?role=owner"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-700 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-orange-700/30 hover:bg-orange-800 transition-all"
-                >
-                  Post a Project
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <a
-                  href="#live-tenders"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border bg-card px-6 py-3.5 text-sm font-semibold text-foreground hover:bg-accent transition-colors"
-                >
-                  Explore Tenders
-                </a>
-              </div>
-
-              {/* Dynamic Live Database Trust Indicators */}
-              <div className="pt-6 grid grid-cols-3 gap-4 border-t border-muted/60 max-w-lg mx-auto lg:mx-0 text-left">
-                <div>
-                  <div className="text-xl font-bold text-foreground">100%</div>
-                  <div className="text-xs text-muted-foreground">Admin Verified</div>
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-orange-600">₹{liveStats.totalTenderValueCr}Cr</div>
-                  <div className="text-xs text-muted-foreground">Live Tender Value</div>
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-foreground">{liveStats.totalVerifiedContractors}</div>
-                  <div className="text-xs text-muted-foreground">Licensed Contractors</div>
-                </div>
-              </div>
+    <div className="pb-16 overflow-x-clip">
+      {/* Mobile Sticky Hero Background Layer (PhonePe App Style) */}
+      <div className="lg:hidden sticky top-16 z-0 w-full h-[240px] sm:h-[300px] overflow-hidden bg-slate-950">
+        {!heroImgError ? (
+          <Image
+            src="/hero-construction.jpg"
+            alt="NIRMAN Construction Platform"
+            fill
+            sizes="100vw"
+            className="object-cover w-full h-full"
+            priority
+            onError={() => setHeroImgError(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-3">
+            <div className="h-14 w-14 rounded-2xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400">
+              <HardHat className="h-7 w-7" />
             </div>
+            <div className="text-base font-bold text-white">NIRMAN Marketplace</div>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+        
+        <div className="absolute bottom-3 left-3 right-3 p-3 rounded-xl bg-black/65 backdrop-blur-md border border-white/10 text-white space-y-0.5 z-10">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-orange-400">
+            <span>Live Marketplace Activity</span>
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+          </div>
+          <div className="font-bold text-xs">Real-time Construction Tenders</div>
+          <p className="text-[10px] text-slate-300 line-clamp-1">Contractors submitting transparent BOQ bids directly.</p>
+        </div>
+      </div>
 
-            {/* Right Visual Image */}
-            <div className="lg:col-span-5">
-              <div className="relative mx-auto max-w-md lg:max-w-none rounded-2xl border bg-card p-3 shadow-2xl overflow-hidden">
-                <div className="relative h-[360px] w-full rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 via-orange-950/60 to-slate-900">
-                  {!heroImgError ? (
-                    <Image
-                      src="/hero-construction.jpg"
-                      alt="NIRMAN Construction Platform"
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
-                      className="object-cover"
-                      priority
-                      onError={() => setHeroImgError(true)}
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-3">
-                      <div className="h-16 w-16 rounded-2xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400">
-                        <HardHat className="h-8 w-8" />
-                      </div>
-                      <div className="text-lg font-bold text-white">NIRMAN Marketplace</div>
-                      <p className="text-xs text-slate-300 max-w-xs">Connecting verified property owners with top-rated civil contractors.</p>
+      {/* Main Content Layer - Scrolls Smoothly Over Hero Image on mobile, Standard 2-Col on Desktop */}
+      <div className="relative z-10 bg-background rounded-t-3xl lg:rounded-none border-t border-border/40 lg:border-t-0 shadow-2xl lg:shadow-none -mt-4 lg:mt-0 pt-6 lg:pt-0 space-y-12 sm:space-y-16">
+        {/* Hero Content Section */}
+        <section className="relative lg:border-b lg:bg-gradient-to-b lg:from-orange-500/10 lg:via-background lg:to-background lg:py-24">
+          <div className="container mx-auto px-4 sm:px-6 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+              
+              {/* Left Content (Text & Trust Indicators) */}
+              <div className="lg:col-span-7 space-y-3 sm:space-y-6 text-center lg:text-left">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-[11px] sm:text-xs font-bold text-orange-600 dark:text-orange-400">
+                  <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Verified Construction Marketplace
+                </div>
+
+                <h1 className="text-2xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight sm:leading-[1.15]">
+                  Build Better. <br className="hidden sm:inline" />
+                  <span className="bg-gradient-to-r from-orange-600 to-amber-500 bg-clip-text text-transparent">
+                    Find the Right Contractor.
+                  </span>
+                </h1>
+
+                <p className="hidden sm:block text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                  NIRMAN connects property owners with trusted contractors through a transparent construction tender marketplace.
+                </p>
+
+                {/* Hero Action Buttons */}
+                <div className="hidden sm:flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-2">
+                  <Link
+                    href="/register?role=owner"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-700 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-orange-700/30 hover:bg-orange-800 transition-all"
+                  >
+                    Post a Project
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <a
+                    href="#live-tenders"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border bg-card px-6 py-3.5 text-sm font-semibold text-foreground hover:bg-accent transition-colors"
+                  >
+                    Explore Tenders
+                  </a>
+                </div>
+
+                {/* Dynamic Live Database Trust Indicators */}
+                <div className="pt-4 sm:pt-6 border-t border-muted/60 max-w-xl mx-auto lg:mx-0">
+                  <div className="grid grid-cols-3 divide-x divide-border/60 rounded-2xl border bg-card/60 backdrop-blur-xs p-3 sm:p-3.5 text-center shadow-xs">
+                    <div className="px-2 flex flex-col items-center justify-center">
+                      <div className="text-base sm:text-xl font-black text-foreground tracking-tight">100%</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground font-medium whitespace-nowrap">Admin Verified</div>
                     </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                  
-                  <div className="absolute bottom-4 left-4 right-4 p-4 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 text-white space-y-1 z-10">
-                    <div className="flex items-center justify-between text-xs font-semibold text-orange-400">
-                      <span>Live Marketplace Activity</span>
-                      <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                    <div className="px-2 flex flex-col items-center justify-center">
+                      <div className="text-base sm:text-xl font-black text-orange-600 tracking-tight">₹{liveStats.totalTenderValueCr}Cr</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground font-medium whitespace-nowrap">Live Tenders</div>
                     </div>
-                    <div className="font-bold text-sm">Real-time Construction Tenders</div>
-                    <p className="text-[11px] text-slate-300">Contractors submitting transparent BOQ bids directly.</p>
+                    <div className="px-2 flex flex-col items-center justify-center">
+                      <div className="text-base sm:text-xl font-black text-foreground tracking-tight">{liveStats.totalVerifiedContractors}</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground font-medium whitespace-nowrap">Contractors</div>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* Desktop Visual Image Card (Rendered only on large screens) */}
+              <div className="hidden lg:block lg:col-span-5">
+                <div className="relative mx-auto max-w-none rounded-3xl border border-border/60 bg-card p-3 shadow-2xl overflow-hidden">
+                  <div className="relative h-[380px] w-full rounded-2xl overflow-hidden bg-gradient-to-br from-slate-900 via-orange-950/60 to-slate-900">
+                    {!heroImgError ? (
+                      <Image
+                        src="/hero-construction.jpg"
+                        alt="NIRMAN Construction Platform"
+                        fill
+                        sizes="(max-width: 1200px) 50vw, 40vw"
+                        className="object-cover w-full h-full"
+                        priority
+                        onError={() => setHeroImgError(true)}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-3">
+                        <div className="h-16 w-16 rounded-2xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400">
+                          <HardHat className="h-8 w-8" />
+                        </div>
+                        <div className="text-lg font-bold text-white">NIRMAN Marketplace</div>
+                        <p className="text-xs text-slate-300 max-w-xs">Connecting verified property owners with top-rated civil contractors.</p>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    
+                    <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-black/65 backdrop-blur-md border border-white/10 text-white space-y-1 z-10">
+                      <div className="flex items-center justify-between text-xs font-semibold text-orange-400">
+                        <span>Live Marketplace Activity</span>
+                        <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                      </div>
+                      <div className="font-bold text-sm">Real-time Construction Tenders</div>
+                      <p className="text-[11px] text-slate-300">Contractors submitting transparent BOQ bids directly.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
       {/* Live Tenders Section */}
       <section id="live-tenders" className="container mx-auto px-4 sm:px-6 space-y-8">
-        <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 border-b pb-4">
+        <div className="flex items-center justify-between gap-2 border-b pb-3 sm:pb-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-orange-600">
+            <div className="hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-orange-600">
               <Building2 className="h-4 w-4" /> Active Tender Marketplace
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">
-              Live Construction Tenders
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-lg sm:text-3xl font-extrabold text-foreground tracking-tight">
+                Live Construction Tenders
+              </h2>
+              <span className="sm:hidden text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 border border-orange-500/20 shrink-0">
+                {sortedTenders.length} Active
+              </span>
+            </div>
+            <p className="hidden sm:block text-xs sm:text-sm text-muted-foreground mt-0.5">
               Browse open tenders published by verified property owners across India.
             </p>
           </div>
 
-          <div className="text-xs text-muted-foreground">
+          <div className="hidden sm:block text-xs text-muted-foreground shrink-0">
             Showing <span className="font-bold text-foreground">{sortedTenders.length}</span> active tenders
           </div>
         </div>
@@ -276,18 +319,18 @@ export default function HomePage() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="border-t bg-muted/30 py-16">
-        <div className="container mx-auto px-4 sm:px-6 space-y-12">
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">
+      <section id="how-it-works" className="border-t bg-muted/30 py-10 sm:py-16">
+        <div className="container mx-auto px-4 sm:px-6 space-y-6 sm:space-y-12">
+          <div className="text-center space-y-1 max-w-2xl mx-auto">
+            <h2 className="text-xl sm:text-3xl font-extrabold text-foreground tracking-tight">
               How NIRMAN Works
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">
+            <p className="hidden sm:block text-xs sm:text-sm text-muted-foreground">
               A transparent, admin-verified 4-step workflow connecting property owners with top contractors.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <div className="rounded-xl border bg-card p-6 space-y-3 relative">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 text-orange-600 font-extrabold text-lg">
                 1
@@ -331,8 +374,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Contact Us Section */}
-      <ContactSection />
+        {/* Contact Us Section */}
+        <ContactSection />
+      </div>
     </div>
   );
 }

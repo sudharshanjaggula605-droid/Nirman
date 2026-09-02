@@ -8,12 +8,16 @@ import {
   Clock,
   Building2,
   CheckCircle2,
+  XCircle,
   Sparkles,
   TrendingDown,
   Award,
+  X,
+  AlertCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { acceptBidAction } from "@/actions/bids";
+import { acceptBidAction, rejectBidAction } from "@/actions/bids";
+import { formatCurrency } from "@/lib/utils";
 
 export default function ReceivedBidsPage() {
   const [bids, setBids] = useState<any[]>([]);
@@ -22,36 +26,44 @@ export default function ReceivedBidsPage() {
   const [viewMode, setViewMode] = useState<"cards" | "compare">("cards");
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
+  // Reject Modal State
+  const [rejectingBid, setRejectingBid] = useState<any>(null);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [rejectError, setRejectError] = useState<string | null>(null);
+
   const supabase = createClient();
 
-  useEffect(() => {
-    async function fetchOwnerBids() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+  const fetchOwnerBids = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
 
-        // Fetch owner's tenders
-        const { data: tenders } = await supabase
-          .from("tenders")
-          .select("id, title")
-          .eq("owner_id", user.id);
+      // Fetch owner's tenders
+      const { data: tenders } = await supabase
+        .from("tenders")
+        .select("id, title")
+        .eq("owner_id", user.id);
 
-        if (tenders && tenders.length > 0) {
-          const tenderIds = tenders.map((t) => t.id);
-          const { data: bidsData } = await supabase
-            .from("bids")
-            .select("*, contractor:contractors(*), tender:tenders(title)")
-            .in("tender_id", tenderIds)
-            .order("submitted_at", { ascending: false });
+      if (tenders && tenders.length > 0) {
+        const tenderIds = tenders.map((t) => t.id);
+        const { data: bidsData } = await supabase
+          .from("bids")
+          .select("*, contractor:contractors(*), tender:tenders(title, status)")
+          .in("tender_id", tenderIds)
+          .order("submitted_at", { ascending: false });
 
-          if (bidsData) setBids(bidsData);
-        }
-      } catch (err) {
-        console.error("Error fetching bids:", err);
-      } finally {
-        setLoading(false);
+        if (bidsData) setBids(bidsData);
       }
+    } catch (err) {
+      console.error("Error fetching bids:", err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchOwnerBids();
   }, []);
 
@@ -68,16 +80,33 @@ export default function ReceivedBidsPage() {
       setActionMessage("Error accepting bid: " + res.error);
     } else {
       setActionMessage("Bid accepted successfully! The project has transitioned to Active status.");
-      setBids((prev) =>
-        prev.map((b) => (b.id === bidId ? { ...b, status: "accepted" } : b))
-      );
+      await fetchOwnerBids();
+    }
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectingBid) return;
+    setIsRejecting(true);
+    setRejectError(null);
+
+    try {
+      const res = await rejectBidAction(rejectingBid.id);
+      if (res.error) {
+        setRejectError(res.error);
+      } else {
+        await fetchOwnerBids();
+        setRejectingBid(null);
+        setActionMessage("Contractor bid has been rejected.");
+      }
+    } catch (err: any) {
+      setRejectError(err?.message || "Failed to reject bid.");
+    } finally {
+      setIsRejecting(false);
     }
   };
 
   const selectedBidsList = bids.filter((b) =>
-    selectedBidsForComparison.length > 0
-      ? selectedBidsForComparison.includes(b.id)
-      : true
+    selectedBidsForComparison.length > 0 ? selectedBidsForComparison.includes(b.id) : true
   );
 
   return (
@@ -86,14 +115,16 @@ export default function ReceivedBidsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
         <div>
           <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Received Contractor Bids</h1>
-          <p className="text-xs text-muted-foreground">Compare quotations, timelines, and contractor ratings to award your project.</p>
+          <p className="text-xs text-muted-foreground">
+            Compare quotations, timelines, and contractor ratings to award your project.
+          </p>
         </div>
 
         {bids.length > 0 && (
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode("cards")}
-              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                 viewMode === "cards"
                   ? "bg-orange-600 text-white shadow-md"
                   : "bg-card border text-muted-foreground hover:text-foreground"
@@ -103,7 +134,7 @@ export default function ReceivedBidsPage() {
             </button>
             <button
               onClick={() => setViewMode("compare")}
-              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                 viewMode === "compare"
                   ? "bg-orange-600 text-white shadow-md"
                   : "bg-card border text-muted-foreground hover:text-foreground"
@@ -122,7 +153,9 @@ export default function ReceivedBidsPage() {
         </div>
       )}
 
-      {bids.length === 0 ? (
+      {loading ? (
+        <div className="py-16 text-center text-xs text-muted-foreground">Loading received bids...</div>
+      ) : bids.length === 0 ? (
         <div className="rounded-2xl border border-dashed p-12 text-center space-y-3 bg-muted/20">
           <Users className="h-10 w-10 text-muted-foreground mx-auto" />
           <h3 className="font-bold text-base text-foreground">No Bids Received Yet</h3>
@@ -147,8 +180,11 @@ export default function ReceivedBidsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {bids.map((bid) => {
                 const isCompared = selectedBidsForComparison.includes(bid.id);
-                const quotationFormatted = `₹${(bid.quotation_amount / 100000).toFixed(2)} L`;
-                const completionMonths = `${Math.round(bid.estimated_completion_days / 30)} months`;
+                const statusUpper = (bid.status || "PENDING").toUpperCase();
+                const isAccepted = statusUpper === "ACCEPTED";
+                const isRejected = statusUpper === "REJECTED";
+                const isTenderAwarded = bid.tender?.status === "awarded";
+                const completionMonths = `${Math.round((bid.estimated_completion_days || 180) / 30)} months`;
 
                 return (
                   <div
@@ -158,9 +194,25 @@ export default function ReceivedBidsPage() {
                     }`}
                   >
                     <div className="space-y-3">
-                      {/* Tender Title */}
-                      <div className="text-[11px] font-bold text-orange-600 bg-orange-500/10 px-2.5 py-1 rounded-md inline-block">
-                        Tender: {bid.tender?.title || "Construction Tender"}
+                      {/* Tender Title & Status Badge */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-[11px] font-bold text-orange-600 bg-orange-500/10 px-2.5 py-1 rounded-md truncate max-w-[170px]">
+                          {bid.tender?.title || "Construction Tender"}
+                        </div>
+
+                        {isAccepted ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-600 border border-emerald-500/20">
+                            <CheckCircle2 className="h-3 w-3" /> Accepted
+                          </span>
+                        ) : isRejected ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-2.5 py-0.5 text-[10px] font-bold text-rose-600 border border-rose-500/20">
+                            <XCircle className="h-3 w-3" /> Rejected
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-bold text-amber-600 border border-amber-500/20">
+                            <Clock className="h-3 w-3" /> Pending
+                          </span>
+                        )}
                       </div>
 
                       {/* Contractor Basic Header */}
@@ -183,7 +235,9 @@ export default function ReceivedBidsPage() {
                       <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted/30 p-3 text-xs border">
                         <div>
                           <span className="text-[10px] text-muted-foreground font-semibold block">Quotation</span>
-                          <span className="font-extrabold text-sm text-foreground">{quotationFormatted}</span>
+                          <span className="font-extrabold text-sm text-emerald-600">
+                            {formatCurrency(bid.quotation_amount || 0)}
+                          </span>
                         </div>
                         <div>
                           <span className="text-[10px] text-muted-foreground font-semibold block">Completion Time</span>
@@ -191,39 +245,60 @@ export default function ReceivedBidsPage() {
                         </div>
                         <div>
                           <span className="text-[10px] text-muted-foreground font-semibold block">Experience</span>
-                          <span className="font-bold text-foreground">{bid.contractor?.years_of_experience || 10} Years</span>
+                          <span className="font-bold text-foreground">
+                            {bid.contractor?.years_of_experience || 10} Years
+                          </span>
                         </div>
                         <div>
                           <span className="text-[10px] text-muted-foreground font-semibold block">Completed</span>
-                          <span className="font-bold text-foreground">{bid.contractor?.total_projects || 20} Projects</span>
+                          <span className="font-bold text-foreground">
+                            {bid.contractor?.total_projects || 20} Projects
+                          </span>
                         </div>
                       </div>
 
                       {/* Proposal Snippet */}
-                      <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-                        "{bid.proposal}"
-                      </p>
+                      {bid.proposal && (
+                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                          &quot;{bid.proposal}&quot;
+                        </p>
+                      )}
                     </div>
 
                     {/* Actions */}
                     <div className="pt-4 border-t space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <button
+                          type="button"
                           onClick={() => handleToggleCompare(bid.id)}
-                          className={`w-full py-2 text-xs font-bold rounded-xl border transition-all ${
+                          className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                             isCompared
                               ? "bg-orange-600 text-white border-orange-600"
                               : "bg-background text-foreground hover:bg-accent"
                           }`}
                         >
-                          {isCompared ? "Selected ✓" : "+ Compare"}
+                          {isCompared ? "✓ Selected" : "+ Compare"}
                         </button>
+
                         <button
-                          onClick={() => handleAcceptBid(bid.id)}
-                          disabled={bid.status === "accepted"}
-                          className="w-full py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-sm"
+                          type="button"
+                          disabled={isAccepted || isRejected || isTenderAwarded}
+                          onClick={() => {
+                            setRejectingBid(bid);
+                            setRejectError(null);
+                          }}
+                          className="py-2 text-xs font-bold rounded-xl border border-rose-500/30 text-rose-600 hover:bg-rose-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                         >
-                          {bid.status === "accepted" ? "Accepted ✓" : "Accept Bid"}
+                          {isRejected ? "Rejected" : "Reject"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleAcceptBid(bid.id)}
+                          disabled={isAccepted || isRejected || isTenderAwarded}
+                          className="py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
+                        >
+                          {isAccepted ? "Accepted ✓" : "Accept"}
                         </button>
                       </div>
                     </div>
@@ -245,7 +320,7 @@ export default function ReceivedBidsPage() {
                 </div>
                 <button
                   onClick={() => setViewMode("cards")}
-                  className="text-xs font-bold text-orange-600 hover:underline"
+                  className="text-xs font-bold text-orange-600 hover:underline cursor-pointer"
                 >
                   ← Back to Card View
                 </button>
@@ -271,8 +346,8 @@ export default function ReceivedBidsPage() {
                         <TrendingDown className="h-4 w-4 text-emerald-500" /> Quotation Amount
                       </td>
                       {selectedBidsList.map((bid) => (
-                        <td key={bid.id} className="p-4 text-center border-r font-extrabold text-sm text-foreground">
-                          ₹{(bid.quotation_amount / 100000).toFixed(2)} Lakhs
+                        <td key={bid.id} className="p-4 text-center border-r font-extrabold text-sm text-emerald-600">
+                          {formatCurrency(bid.quotation_amount || 0)}
                         </td>
                       ))}
                     </tr>
@@ -284,7 +359,7 @@ export default function ReceivedBidsPage() {
                       </td>
                       {selectedBidsList.map((bid) => (
                         <td key={bid.id} className="p-4 text-center border-r font-bold">
-                          {Math.round(bid.estimated_completion_days / 30)} Months ({bid.estimated_completion_days} days)
+                          {bid.estimated_completion_days || 180} Days
                         </td>
                       ))}
                     </tr>
@@ -330,13 +405,27 @@ export default function ReceivedBidsPage() {
                       <td className="p-4 font-bold text-foreground bg-card sticky left-0 z-10 border-r">Action</td>
                       {selectedBidsList.map((bid) => (
                         <td key={bid.id} className="p-4 text-center border-r">
-                          <button
-                            onClick={() => handleAcceptBid(bid.id)}
-                            disabled={bid.status === "accepted"}
-                            className="w-full py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 disabled:opacity-50 shadow-sm"
-                          >
-                            {bid.status === "accepted" ? "Accepted ✓" : "Accept Bid"}
-                          </button>
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRejectingBid(bid);
+                                setRejectError(null);
+                              }}
+                              disabled={bid.status === "accepted" || bid.status === "rejected"}
+                              className="px-3 py-1.5 rounded-xl border border-rose-500/30 text-rose-600 font-bold text-xs hover:bg-rose-500/10 disabled:opacity-40 cursor-pointer"
+                            >
+                              Reject
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAcceptBid(bid.id)}
+                              disabled={bid.status === "accepted" || bid.status === "rejected"}
+                              className="px-4 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 disabled:opacity-40 shadow-sm cursor-pointer"
+                            >
+                              {bid.status === "accepted" ? "Accepted ✓" : "Accept"}
+                            </button>
+                          </div>
                         </td>
                       ))}
                     </tr>
@@ -346,6 +435,54 @@ export default function ReceivedBidsPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* REJECT CONFIRMATION POPUP */}
+      {rejectingBid && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="relative w-full max-w-md rounded-3xl border bg-card text-foreground shadow-2xl p-6 sm:p-8 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="h-12 w-12 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center mx-auto border border-rose-500/20">
+              <XCircle className="h-6 w-6" />
+            </div>
+
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-extrabold text-foreground">Are you sure you want to reject this bid?</h3>
+              <p className="text-xs text-muted-foreground">
+                Quotation of{" "}
+                <strong className="text-foreground">{formatCurrency(rejectingBid.quotation_amount)}</strong> from{" "}
+                <strong className="text-foreground">
+                  {rejectingBid.contractor?.company_name || rejectingBid.contractor?.contact_person}
+                </strong>{" "}
+                will be marked as rejected. Other contractors&apos; bids will remain active.
+              </p>
+            </div>
+
+            {rejectError && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 font-bold text-xs">
+                {rejectError}
+              </div>
+            )}
+
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isRejecting}
+                onClick={() => setRejectingBid(null)}
+                className="flex-1 rounded-xl border px-4 py-2.5 text-xs font-bold text-foreground hover:bg-accent transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isRejecting}
+                onClick={handleConfirmReject}
+                className="flex-1 rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-rose-700 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isRejecting ? "Rejecting..." : "Yes, Reject Bid"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

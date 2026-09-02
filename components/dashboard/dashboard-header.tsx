@@ -170,33 +170,40 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
     searchInputRef.current?.focus();
   };
 
-  // Live Unread Notification Count
+  // Live Unread Notification Count (Realtime postgres_changes + 30s backup interval)
   useEffect(() => {
     async function updateUnreadNotifCount() {
-      const res = await getUnreadNotificationCountAction();
-      setUnreadNotifs(res.count || 0);
+      try {
+        const res = await getUnreadNotificationCountAction();
+        setUnreadNotifs(res.count || 0);
+      } catch {}
     }
     updateUnreadNotifCount();
-    const interval = setInterval(updateUnreadNotifCount, 3000);
+    const interval = setInterval(updateUnreadNotifCount, 30000);
     const channel = supabase
-      .channel(`header_notif_unread_${Date.now()}`)
+      .channel("header_notif_unread")
       .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, updateUnreadNotifCount)
       .subscribe();
-    return () => { clearInterval(interval); supabase.removeChannel(channel); };
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  // Live Unread Chat Count
+  // Live Unread Chat Count (Realtime postgres_changes + window events + 30s backup interval)
   useEffect(() => {
     async function updateUnreadChatCount() {
-      const res = await getUnreadMessageCountAction();
-      setUnreadChatCount(res.count || 0);
+      try {
+        const res = await getUnreadMessageCountAction();
+        setUnreadChatCount(res.count || 0);
+      } catch {}
     }
     updateUnreadChatCount();
     const handleReadEvent = () => updateUnreadChatCount();
     window.addEventListener("chat_read_updated", handleReadEvent);
-    const interval = setInterval(updateUnreadChatCount, 3000);
+    const interval = setInterval(updateUnreadChatCount, 30000);
     const channel = supabase
-      .channel(`header_chat_unread_${Date.now()}`)
+      .channel("header_chat_unread")
       .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, updateUnreadChatCount)
       .subscribe();
     return () => {

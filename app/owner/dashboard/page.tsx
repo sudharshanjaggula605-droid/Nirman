@@ -294,7 +294,7 @@ export default function OwnerDashboardPage() {
           <div className="flex items-center justify-between border-b pb-3">
             <div>
               <h2 className="text-base font-extrabold text-foreground">Recent Tenders</h2>
-              <p className="text-xs text-muted-foreground font-medium">Tenders created for contractor bidding</p>
+              <p className="hidden sm:block text-xs text-muted-foreground font-medium">Tenders created for contractor bidding</p>
             </div>
             <Link href="/owner/tenders" className="text-xs font-bold text-orange-600 hover:underline">
               View All ({tenders.length}) →
@@ -335,10 +335,10 @@ export default function OwnerDashboardPage() {
               })}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed p-8 text-center space-y-3 bg-muted/10">
-              <FileText className="h-8 w-8 text-muted-foreground mx-auto" />
+            <div className="rounded-xl border border-dashed p-6 sm:p-8 text-center space-y-2.5 sm:space-y-3 bg-muted/10">
+              <FileText className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground mx-auto" />
               <div className="text-xs font-bold text-foreground">No Tenders Created Yet</div>
-              <p className="text-[11px] text-muted-foreground max-w-xs mx-auto">
+              <p className="hidden sm:block text-[11px] text-muted-foreground max-w-xs mx-auto">
                 Post your first construction tender to receive competitive quotations from verified contractors.
               </p>
               <Link
@@ -356,7 +356,7 @@ export default function OwnerDashboardPage() {
           <div className="flex items-center justify-between border-b pb-3">
             <div>
               <h2 className="text-base font-extrabold text-foreground">Latest Contractor Bids</h2>
-              <p className="text-xs text-muted-foreground font-medium">Quotations submitted for your review</p>
+              <p className="hidden sm:block text-xs text-muted-foreground font-medium">Quotations submitted for your review</p>
             </div>
             <Link href="/owner/bids" className="text-xs font-bold text-orange-600 hover:underline">
               View All ({bids.length}) →
@@ -399,10 +399,10 @@ export default function OwnerDashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed p-8 text-center space-y-2 bg-muted/10">
-              <Users className="h-8 w-8 text-muted-foreground mx-auto" />
+            <div className="rounded-xl border border-dashed p-6 sm:p-8 text-center space-y-2 bg-muted/10">
+              <Users className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground mx-auto" />
               <div className="text-xs font-bold text-foreground">No Bids Received Yet</div>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="hidden sm:block text-[11px] text-muted-foreground">
                 Once contractors review your open tenders, their quotation proposals will appear here.
               </p>
             </div>

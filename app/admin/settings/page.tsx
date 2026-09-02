@@ -29,6 +29,8 @@ import {
   Phone,
   ShieldCheck,
   Building2,
+  CreditCard,
+  QrCode,
 } from "lucide-react";
 import {
   getAdminFullSettingsAction,
@@ -37,6 +39,7 @@ import {
   updateAdminUserManagementSettingsAction,
   updateAdminTenderManagementSettingsAction,
   updateAdminSystemSettingsAction,
+  updateAdminPaymentSettingsAction,
   updateAdminPasswordAction,
   getAdminSecurityAuditAction,
   NotificationPreferences,
@@ -45,12 +48,13 @@ import {
   SystemSettings,
   AdminProfileData,
 } from "@/actions/admin-settings";
+import { type PaymentSettingsConfig } from "@/types";
 import { formatDate } from "@/lib/utils";
 
 export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<
-    "all" | "profile" | "notifications" | "users" | "tenders" | "security" | "system"
+    "all" | "profile" | "notifications" | "users" | "tenders" | "security" | "system" | "payments"
   >("all");
 
   // Section 1: Profile State
@@ -124,6 +128,19 @@ export default function AdminSettingsPage() {
   const [systemSuccessMsg, setSystemSuccessMsg] = useState<string | null>(null);
   const [systemErrorMsg, setSystemErrorMsg] = useState<string | null>(null);
 
+  // Section 7: Payment Settings State
+  const [paymentSettings, setPaymentSettings] = useState<PaymentSettingsConfig>({
+    razorpay_enabled: true,
+    static_qr_enabled: true,
+    static_qr_image: "/images/static_upi_qr.png",
+    upi_id: "nirman@upi",
+    display_name: "NIRMAN Technologies Pvt Ltd",
+    payment_instructions: "Scan using GPay, PhonePe, Paytm, or BHIM UPI app to pay ₹199.",
+  });
+  const [savingPaymentSettings, setSavingPaymentSettings] = useState(false);
+  const [paymentSuccessMsg, setPaymentSuccessMsg] = useState<string | null>(null);
+  const [paymentErrorMsg, setPaymentErrorMsg] = useState<string | null>(null);
+
   // Load initial settings from database
   useEffect(() => {
     async function loadSettings() {
@@ -139,6 +156,7 @@ export default function AdminSettingsPage() {
           if (res.userManagement) setUserManagement(res.userManagement);
           if (res.tenderManagement) setTenderManagement(res.tenderManagement);
           if (res.systemSettings) setSystemSettings(res.systemSettings);
+          if (res.paymentSettings) setPaymentSettings(res.paymentSettings);
         }
       } catch (err) {
         console.error("Failed to load settings:", err);
@@ -1217,6 +1235,179 @@ export default function AdminSettingsPage() {
               ) : (
                 <>
                   <Save className="h-4 w-4" /> Save Changes
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 7. PAYMENT SETTINGS SECTION */}
+      {/* ========================================================================= */}
+      <div className="rounded-2xl sm:rounded-3xl border border-slate-800 bg-slate-900 p-6 sm:p-8 space-y-6 shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-white font-extrabold text-lg">
+              <CreditCard className="h-5 w-5 text-amber-500" />
+              <span>Payment Gateway & Static QR Settings</span>
+            </div>
+            <p className="text-xs text-slate-400">
+              Configure Razorpay credentials status, Static UPI QR display, UPI ID, and platform selection fees.
+            </p>
+          </div>
+          <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+            Platform Fee: ₹199
+          </span>
+        </div>
+
+        {paymentSuccessMsg && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs font-bold text-emerald-400 animate-in fade-in">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span>{paymentSuccessMsg}</span>
+          </div>
+        )}
+        {paymentErrorMsg && (
+          <div className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-xs font-bold text-rose-400 animate-in fade-in">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{paymentErrorMsg}</span>
+          </div>
+        )}
+
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setSavingPaymentSettings(true);
+            setPaymentSuccessMsg(null);
+            setPaymentErrorMsg(null);
+            try {
+              const res = await updateAdminPaymentSettingsAction(paymentSettings);
+              if (res.success) {
+                setPaymentSuccessMsg("Payment configuration saved successfully!");
+                setTimeout(() => setPaymentSuccessMsg(null), 4000);
+              } else {
+                setPaymentErrorMsg(res.error || "Unable to save payment settings.");
+              }
+            } catch {
+              setPaymentErrorMsg("Failed to save payment settings.");
+            } finally {
+              setSavingPaymentSettings(false);
+            }
+          }}
+          className="space-y-6"
+        >
+          {/* Toggles */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center justify-between p-4 rounded-2xl border border-slate-800 bg-slate-950 gap-4">
+              <div className="space-y-1">
+                <div className="text-xs font-bold text-white">Razorpay Payment Gateway</div>
+                <p className="text-[11px] text-slate-400">Enable online card, netbanking, and dynamic UPI payments</p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setPaymentSettings((ps) => ({
+                    ...ps,
+                    razorpay_enabled: !ps.razorpay_enabled,
+                  }))
+                }
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                  paymentSettings.razorpay_enabled
+                    ? "bg-emerald-500 text-slate-950 shadow-md"
+                    : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                }`}
+              >
+                {paymentSettings.razorpay_enabled ? "ENABLED" : "DISABLED"}
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between p-4 rounded-2xl border border-slate-800 bg-slate-950 gap-4">
+              <div className="space-y-1">
+                <div className="text-xs font-bold text-white">Static UPI QR Option</div>
+                <p className="text-[11px] text-slate-400">Allow owners to pay via static QR with UTR admin verification</p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setPaymentSettings((ps) => ({
+                    ...ps,
+                    static_qr_enabled: !ps.static_qr_enabled,
+                  }))
+                }
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                  paymentSettings.static_qr_enabled
+                    ? "bg-emerald-500 text-slate-950 shadow-md"
+                    : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                }`}
+              >
+                {paymentSettings.static_qr_enabled ? "ENABLED" : "DISABLED"}
+              </button>
+            </div>
+          </div>
+
+          {/* Configuration Inputs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Official UPI ID (VPA) *
+              </label>
+              <input
+                type="text"
+                required
+                value={paymentSettings.upi_id}
+                onChange={(e) =>
+                  setPaymentSettings((ps) => ({ ...ps, upi_id: e.target.value }))
+                }
+                placeholder="nirman@upi"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500 font-mono font-bold"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Payee / Merchant Display Name *
+              </label>
+              <input
+                type="text"
+                required
+                value={paymentSettings.display_name}
+                onChange={(e) =>
+                  setPaymentSettings((ps) => ({ ...ps, display_name: e.target.value }))
+                }
+                placeholder="NIRMAN Technologies Pvt Ltd"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Payment Instructions
+            </label>
+            <textarea
+              rows={2}
+              value={paymentSettings.payment_instructions}
+              onChange={(e) =>
+                setPaymentSettings((ps) => ({ ...ps, payment_instructions: e.target.value }))
+              }
+              placeholder="Scan using GPay, PhonePe, Paytm, or BHIM UPI app to pay ₹199."
+              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500"
+            />
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <button
+              type="submit"
+              disabled={savingPaymentSettings}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-2.5 text-xs font-bold text-white shadow-lg shadow-amber-600/30 hover:from-amber-700 hover:to-orange-700 disabled:opacity-50 transition-all cursor-pointer"
+            >
+              {savingPaymentSettings ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Saving Settings...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" /> Save Payment Settings
                 </>
               )}
             </button>

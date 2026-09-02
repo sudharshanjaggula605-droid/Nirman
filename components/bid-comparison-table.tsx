@@ -1,28 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, Star, Clock, Briefcase, Award, ShieldCheck, DollarSign } from "lucide-react";
+import { CheckCircle2, Star, Clock, Briefcase, Award, ShieldCheck, DollarSign, HardHat } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 interface BidComparisonTableProps {
   bids: any[];
-  onAcceptBid: (bidId: string) => Promise<void>;
+  onSelectBid: (bid: any) => void;
 }
 
-export function BidComparisonTable({ bids, onAcceptBid }: BidComparisonTableProps) {
-  const [loadingBidId, setLoadingBidId] = useState<string | null>(null);
-
-  const handleAccept = async (bidId: string) => {
-    if (confirm("Are you sure you want to accept this contractor's bid? This will reject other bids and activate the project.")) {
-      setLoadingBidId(bidId);
-      try {
-        await onAcceptBid(bidId);
-      } finally {
-        setLoadingBidId(null);
-      }
-    }
-  };
-
+export function BidComparisonTable({ bids, onSelectBid }: BidComparisonTableProps) {
   if (!bids || bids.length === 0) {
     return (
       <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
@@ -32,7 +18,7 @@ export function BidComparisonTable({ bids, onAcceptBid }: BidComparisonTableProp
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
+    <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b bg-muted/50">
@@ -52,14 +38,14 @@ export function BidComparisonTable({ bids, onAcceptBid }: BidComparisonTableProp
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y">
+        <tbody className="divide-y text-xs">
           {/* Quotation Amount */}
           <tr>
             <td className="p-4 font-semibold text-muted-foreground flex items-center gap-1.5">
               <DollarSign className="h-4 w-4 text-emerald-500" /> Total Quotation
             </td>
             {bids.map((b) => (
-              <td key={b.id} className="p-4 font-black text-lg text-emerald-600 dark:text-emerald-400">
+              <td key={b.id} className="p-4 font-black text-base text-emerald-600 dark:text-emerald-400">
                 {formatCurrency(b.quotation_amount)}
               </td>
             ))}
@@ -99,7 +85,7 @@ export function BidComparisonTable({ bids, onAcceptBid }: BidComparisonTableProp
                 <div className="flex items-center gap-1">
                   <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                   <span className="font-bold">{b.contractor?.average_rating || 0.0}</span>
-                  <span className="text-xs text-muted-foreground">({b.contractor?.total_reviews || 0} reviews)</span>
+                  <span className="text-[10px] text-muted-foreground">({b.contractor?.total_reviews || 0} reviews)</span>
                 </div>
               </td>
             ))}
@@ -168,20 +154,24 @@ export function BidComparisonTable({ bids, onAcceptBid }: BidComparisonTableProp
 
           {/* Action Row */}
           <tr className="bg-muted/30">
-            <td className="p-4 font-bold text-foreground">Action</td>
+            <td className="p-4 font-bold text-foreground">
+              <span className="flex items-center gap-1">
+                <ShieldCheck className="h-3.5 w-3.5 text-amber-500" /> Platform Fee: ₹199
+              </span>
+            </td>
             {bids.map((b) => (
               <td key={b.id} className="p-4">
                 {b.status === "accepted" ? (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm">
-                    <CheckCircle2 className="h-4 w-4" /> Accepted Bid
+                  <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-black text-white shadow-sm">
+                    <CheckCircle2 className="h-4 w-4" /> Appointed Contractor
                   </span>
                 ) : (
                   <button
-                    onClick={() => handleAccept(b.id)}
-                    disabled={loadingBidId === b.id}
-                    className="w-full rounded-lg bg-orange-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                    type="button"
+                    onClick={() => onSelectBid(b)}
+                    className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-orange-600/20 hover:from-orange-700 hover:to-amber-700 transition-all cursor-pointer"
                   >
-                    {loadingBidId === b.id ? "Accepting..." : "Accept Contractor"}
+                    <HardHat className="h-3.5 w-3.5" /> Select Contractor
                   </button>
                 )}
               </td>

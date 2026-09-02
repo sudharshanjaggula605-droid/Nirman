@@ -35,20 +35,28 @@ export default function AdminContractorsPage() {
 
   const handleApprove = async (id: string) => {
     setMessage(null);
+    // Instant optimistic update
+    setContractors((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status: "approved" } : c))
+    );
     const res = await approveUserAction(id);
     if (res?.error) {
       setMessage("Error approving contractor: " + res.error);
-    } else {
-      const deliveryInfo = res?.channelSummary ? ` (${res.channelSummary})` : "";
-      setMessage(`Contractor approved successfully!${deliveryInfo}`);
+      // Revert on error
       setContractors((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, status: "approved" } : c))
+        prev.map((c) => (c.id === id ? { ...c, status: "pending" } : c))
       );
+    } else {
+      setMessage("Contractor approved successfully!");
     }
   };
 
   const handleReject = async (id: string) => {
     setMessage(null);
+    // Instant optimistic update
+    setContractors((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status: "rejected" } : c))
+    );
     try {
       const { error } = await supabase
         .from("profiles")
@@ -57,11 +65,12 @@ export default function AdminContractorsPage() {
 
       if (error) {
         setMessage("Error rejecting contractor: " + error.message);
+        // Revert on error
+        setContractors((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, status: "pending" } : c))
+        );
       } else {
         setMessage("Contractor application rejected.");
-        setContractors((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, status: "rejected" } : c))
-        );
       }
     } catch (err: any) {
       setMessage("Error: " + err.message);
@@ -70,15 +79,19 @@ export default function AdminContractorsPage() {
 
   const handleDeleteConfirm = async () => {
     if (!contractorToDelete) return;
+    const targetId = contractorToDelete.id;
     setMessage(null);
-    const res = await deleteUserAction(contractorToDelete.id);
+    // Optimistic removal
+    setContractors((prev) => prev.filter((c) => c.id !== targetId));
+    setContractorToDelete(null);
+
+    const res = await deleteUserAction(targetId);
     if (res?.error) {
       setMessage("Error deleting contractor: " + res.error);
+      fetchContractors(); // Refresh to restore on failure
     } else {
       setMessage("Contractor account permanently deleted.");
-      setContractors((prev) => prev.filter((c) => c.id !== contractorToDelete.id));
     }
-    setContractorToDelete(null);
   };
 
   return (

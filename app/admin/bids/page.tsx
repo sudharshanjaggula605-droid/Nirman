@@ -111,8 +111,15 @@ export default function AdminBidsMonitoringPage() {
               <tbody className="divide-y divide-slate-800 text-slate-300">
                 {filteredBids.map((b) => {
                   const statusUpper = (b.status || "PENDING").toUpperCase();
-                  const quotationFormatted = `₹${(b.quotation_amount / 100000).toFixed(2)} Lakhs`;
-                  const durationMonths = `${Math.round(b.estimated_completion_days / 30)} Months (${b.estimated_completion_days} days)`;
+                  const quotationFormatted = b.quotation_amount != null
+                    ? `₹${(b.quotation_amount / 100000).toFixed(2)} Lakhs`
+                    : "N/A";
+                  const durationMonths = b.estimated_completion_days
+                    ? `${Math.round(b.estimated_completion_days / 30)} Months (${b.estimated_completion_days} days)`
+                    : "TBD";
+                  const submittedDate = b.submitted_at
+                    ? new Date(b.submitted_at).toLocaleDateString()
+                    : "N/A";
 
                   return (
                     <tr key={b.id} className="hover:bg-slate-800/40 transition-colors">
@@ -122,11 +129,11 @@ export default function AdminBidsMonitoringPage() {
                       </td>
                       <td className="p-3.5">
                         <div className="font-bold text-amber-400">{b.contractor?.company_name || "Contractor Firm"}</div>
-                        <div className="text-[11px] text-slate-400">{b.contractor?.contact_person}</div>
+                        <div className="text-[11px] text-slate-400">{b.contractor?.contact_person || "Contact Person"}</div>
                       </td>
                       <td className="p-3.5 font-extrabold text-white">{quotationFormatted}</td>
                       <td className="p-3.5 text-slate-300">{durationMonths}</td>
-                      <td className="p-3.5 text-slate-400">{new Date(b.submitted_at).toLocaleDateString()}</td>
+                      <td className="p-3.5 text-slate-400">{submittedDate}</td>
                       <td className="p-3.5">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                           statusUpper === "ACCEPTED"

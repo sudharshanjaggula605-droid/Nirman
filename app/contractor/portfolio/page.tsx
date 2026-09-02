@@ -110,17 +110,17 @@ export default function ContractorPortfolioPage() {
   return (
     <div className="space-y-8 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Contractor Work Portfolio & Project Photos</h1>
-          <p className="text-xs text-muted-foreground">Manage your past project photos and civil engineering showcases to attract property owners.</p>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">Contractor Work Portfolio</h1>
+          <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">Manage your past project photos and civil engineering showcases to attract property owners.</p>
         </div>
 
         <button
           onClick={openAddModal}
-          className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-700 transition-all shrink-0"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-700 transition-all w-full sm:w-auto shrink-0"
         >
-          <PlusCircle className="h-4 w-4" /> Add Project Photo / Showcase
+          <PlusCircle className="h-4 w-4" /> Add Showcase
         </button>
       </div>
 

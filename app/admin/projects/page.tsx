@@ -36,10 +36,19 @@ export default function AdminProjectManagementPage() {
   useEffect(() => {
     async function fetchProjects() {
       try {
-        const { data } = await supabase
+        let { data, error } = await supabase
           .from("projects")
           .select("*, owner:owners(full_name)")
           .order("created_at", { ascending: false });
+
+        if (error || !data) {
+          // Fallback without relation join if foreign key is not in schema cache
+          const fallback = await supabase
+            .from("projects")
+            .select("*")
+            .order("created_at", { ascending: false });
+          data = fallback.data;
+        }
 
         if (data) setProjects(data);
       } catch (err) {

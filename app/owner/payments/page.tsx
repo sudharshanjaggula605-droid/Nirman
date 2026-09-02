@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CreditCard, CheckCircle2, Clock, PlusCircle } from "lucide-react";
+import { CreditCard, CheckCircle2, Clock, PlusCircle, ShieldCheck, AlertCircle, RefreshCw, QrCode } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
@@ -33,13 +33,24 @@ export default function OwnerPaymentsPage() {
           if (ownerProjects.length > 0) setSelectedProjectId(ownerProjects[0].id);
         }
 
-        // Fetch payments for owner projects
+        // Fetch payments for owner
         const { data: ownerPayments } = await supabase
           .from("payments")
           .select("*, project:projects(title)")
-          .eq("payer_id", user.id)
+          .eq("owner_id", user.id)
           .order("created_at", { ascending: false });
-        if (ownerPayments) setPayments(ownerPayments);
+
+        if (ownerPayments) {
+          setPayments(ownerPayments);
+        } else {
+          // Fallback to payer_id if schema column differs
+          const { data: altPayments } = await supabase
+            .from("payments")
+            .select("*, project:projects(title)")
+            .eq("payer_id", user.id)
+            .order("created_at", { ascending: false });
+          if (altPayments) setPayments(altPayments);
+        }
       } catch (err) {
         console.error("Error loading owner payments:", err);
       } finally {
@@ -49,9 +60,15 @@ export default function OwnerPaymentsPage() {
     loadFinances();
   }, []);
 
-  const totalBudget = projects.reduce((acc, p) => acc + (p.estimated_budget || 0), 0);
-  const totalPaid = payments.filter((p) => p.status === "paid").reduce((acc, p) => acc + (p.amount || 0), 0);
-  const remainingBalance = Math.max(0, totalBudget - totalPaid);
+  const totalPaidSelectionFees = payments
+    .filter((p) => p.payment_type === "CONTRACTOR_SELECTION_FEE" && p.status === "paid")
+    .reduce((acc, p) => acc + (p.amount || 0), 0);
+
+  const totalPaidMilestones = payments
+    .filter((p) => p.payment_type !== "CONTRACTOR_SELECTION_FEE" && p.status === "paid")
+    .reduce((acc, p) => acc + (p.amount || 0), 0);
+
+  const totalPaid = totalPaidSelectionFees + totalPaidMilestones;
 
   const handleCreatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,12 +79,12 @@ export default function OwnerPaymentsPage() {
       const numAmount = parseFloat(amount || "0");
       const newPayment = {
         project_id: selectedProjectId || null,
-        payer_id: user.id,
-        title,
+        owner_id: user.id,
         amount: numAmount,
-        payment_mode: paymentMode,
+        payment_type: "PROJECT_MILESTONE",
+        description: title,
         status: "paid",
-        paid_at: new Date().toISOString(),
+        payment_date: new Date().toISOString(),
       };
 
       const { data } = await supabase.from("payments").insert(newPayment).select("*, project:projects(title)").single();
@@ -84,15 +101,15 @@ export default function OwnerPaymentsPage() {
 
   return (
     <div className="space-y-8 pb-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Project Finances & Payments</h1>
-          <p className="text-xs text-muted-foreground">Track total construction expenditure, upcoming milestone dues, and payment records</p>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">Project Finances & Payments</h1>
+          <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">Track NIRMAN selection fees, escrow records, and construction disbursements</p>
         </div>
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-700 transition-all shrink-0"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-700 transition-all w-full sm:w-auto shrink-0 cursor-pointer"
         >
           <PlusCircle className="h-4 w-4" /> Record Milestone Payment
         </button>
@@ -101,40 +118,95 @@ export default function OwnerPaymentsPage() {
       {/* Financial Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-2xl border bg-card p-5 space-y-1 shadow-sm">
-          <span className="text-xs font-bold text-muted-foreground uppercase block">Total Project Budget</span>
-          <span className="text-2xl font-extrabold text-foreground">{formatCurrency(totalBudget)}</span>
+          <span className="text-xs font-bold text-muted-foreground uppercase block">Total Platform Selection Fees</span>
+          <span className="text-2xl font-extrabold text-amber-500">{formatCurrency(totalPaidSelectionFees)}</span>
+          <span className="text-[10px] text-muted-foreground block">₹199 per awarded project</span>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 space-y-1 shadow-sm">
-          <span className="text-xs font-bold text-muted-foreground uppercase block">Total Paid Out</span>
-          <span className="text-2xl font-extrabold text-emerald-600">{formatCurrency(totalPaid)}</span>
+          <span className="text-xs font-bold text-muted-foreground uppercase block">Total Milestone Disbursements</span>
+          <span className="text-2xl font-extrabold text-emerald-600">{formatCurrency(totalPaidMilestones)}</span>
+          <span className="text-[10px] text-muted-foreground block">Construction escrow funds</span>
         </div>
 
         <div className="rounded-2xl border bg-card p-5 space-y-1 shadow-sm">
-          <span className="text-xs font-bold text-muted-foreground uppercase block">Remaining Balance</span>
-          <span className="text-2xl font-extrabold text-purple-600">{formatCurrency(remainingBalance)}</span>
+          <span className="text-xs font-bold text-muted-foreground uppercase block">Total Outflow</span>
+          <span className="text-2xl font-extrabold text-foreground">{formatCurrency(totalPaid)}</span>
+          <span className="text-[10px] text-muted-foreground block">Verified platform transactions</span>
         </div>
       </div>
 
       {/* Payment Transactions Table */}
       <div className="rounded-2xl border bg-card p-6 space-y-4 shadow-sm">
-        <h3 className="font-extrabold text-base text-foreground border-b pb-3">Disbursement Transactions</h3>
+        <div className="flex items-center justify-between border-b pb-3">
+          <h3 className="font-extrabold text-base text-foreground">Transaction & Selection Fee History</h3>
+          <span className="text-xs text-muted-foreground font-medium">{payments.length} Records</span>
+        </div>
 
-        {payments.length > 0 ? (
+        {loading ? (
+          <div className="py-12 text-center text-xs text-muted-foreground">Loading payment records...</div>
+        ) : payments.length > 0 ? (
           <div className="divide-y text-xs">
             {payments.map((p) => {
-              const statusUpper = (p.status || "PAID").toUpperCase();
+              let txnRef: any = {};
+              try {
+                txnRef =
+                  typeof p.transaction_reference === "string"
+                    ? JSON.parse(p.transaction_reference)
+                    : p.transaction_reference || {};
+              } catch {}
+
+              const isSelectionFee = p.payment_type === "CONTRACTOR_SELECTION_FEE";
+              const isStaticQrPending = p.status === "pending" && (txnRef.payment_method === "static_qr" || !!txnRef.utr_number);
+              const statusDisplay = isStaticQrPending
+                ? "PENDING VERIFICATION"
+                : (p.status || "PAID").toUpperCase();
+
               return (
-                <div key={p.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <span className="font-bold text-foreground block">{p.title}</span>
-                    <span className="text-muted-foreground">Project: {p.project?.title || "Construction Project"} • Mode: {p.payment_mode || "NetBanking"}</span>
+                <div key={p.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-foreground text-sm">
+                        {isSelectionFee ? "Platform Contractor Selection Fee" : p.description || p.title || "Project Milestone"}
+                      </span>
+                      {isSelectionFee && (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-extrabold text-[10px] border border-amber-500/20">
+                          Selection Fee
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-[11px]">
+                      <span>Project: <strong>{p.project?.title || "Construction Project"}</strong></span>
+                      <span>Payment ID: <strong className="font-mono">{p.id.slice(0, 8)}...</strong></span>
+                      <span>Method: <strong className="uppercase">{txnRef.payment_method || p.payment_mode || "Razorpay"}</strong></span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className="font-extrabold text-emerald-600 text-sm">{formatCurrency(p.amount)}</span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 font-bold border border-emerald-500/20">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> {statusUpper} ({new Date(p.paid_at || p.created_at || Date.now()).toLocaleDateString()})
-                    </span>
+
+                  <div className="flex items-center gap-4 sm:text-right shrink-0">
+                    <div className="space-y-0.5">
+                      <span className="font-extrabold text-foreground text-base block">{formatCurrency(p.amount)}</span>
+                      <span className="text-[10px] text-muted-foreground block">
+                        {new Date(p.payment_date || p.paid_at || p.created_at || Date.now()).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </div>
+
+                    {statusDisplay === "PAID" ? (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 font-bold border border-emerald-500/20">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> PAID
+                      </span>
+                    ) : statusDisplay === "PENDING VERIFICATION" ? (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-500 font-bold border border-amber-500/20">
+                        <Clock className="h-3.5 w-3.5" /> PENDING VERIFICATION
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-500 font-bold border border-rose-500/20">
+                        <AlertCircle className="h-3.5 w-3.5" /> {statusDisplay}
+                      </span>
+                    )}
                   </div>
                 </div>
               );
@@ -144,7 +216,7 @@ export default function OwnerPaymentsPage() {
           <div className="rounded-xl border border-dashed p-8 text-center space-y-2 bg-muted/20">
             <CreditCard className="h-8 w-8 text-muted-foreground mx-auto" />
             <div className="text-xs font-bold text-foreground">No Payment Transactions Recorded</div>
-            <p className="text-[11px] text-muted-foreground">Record milestone disbursements to contractors as project construction progresses.</p>
+            <p className="text-[11px] text-muted-foreground">Platform selection fees and milestone payments will appear here.</p>
           </div>
         )}
       </div>
@@ -188,32 +260,16 @@ export default function OwnerPaymentsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="font-bold text-foreground">Amount (₹) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="800000"
-                    className="w-full rounded-xl border bg-background px-3.5 py-2.5 text-xs text-foreground focus:outline-none font-bold"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-bold text-foreground">Payment Mode</label>
-                  <select
-                    value={paymentMode}
-                    onChange={(e) => setPaymentMode(e.target.value)}
-                    className="w-full rounded-xl border bg-background px-3 py-2 text-xs text-foreground focus:outline-none"
-                  >
-                    <option value="NetBanking">NetBanking / NEFT</option>
-                    <option value="UPI">UPI / GPay</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="Cheque">Cheque</option>
-                  </select>
-                </div>
+              <div className="space-y-1.5">
+                <label className="font-bold text-foreground">Amount (₹) *</label>
+                <input
+                  type="number"
+                  required
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="800000"
+                  className="w-full rounded-xl border bg-background px-3.5 py-2.5 text-xs text-foreground focus:outline-none font-bold"
+                />
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

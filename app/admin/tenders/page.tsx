@@ -19,10 +19,18 @@ export default function AdminTenderManagementPage() {
   useEffect(() => {
     async function fetchTenders() {
       try {
-        const { data } = await supabase
+        let { data, error } = await supabase
           .from("tenders")
           .select("*, owner:owners(full_name), project:projects(*), bids:bids(count)")
           .order("created_at", { ascending: false });
+
+        if (error || !data) {
+          const fallback = await supabase
+            .from("tenders")
+            .select("*")
+            .order("created_at", { ascending: false });
+          data = fallback.data;
+        }
 
         if (data) setTenders(data);
       } catch (err) {
@@ -96,7 +104,9 @@ export default function AdminTenderManagementPage() {
                       <td className="p-3.5 text-slate-300">{capitalize(t.owner?.full_name) || "Property Owner"}</td>
                       <td className="p-3.5 text-slate-400">{capitalize(t.project?.location || t.project?.city) || "Hyderabad"}</td>
                       <td className="p-3.5 font-bold text-amber-400">
-                        ₹{(t.budget_min / 100000).toFixed(1)}L - ₹{(t.budget_max / 100000).toFixed(1)}L
+                        {t.budget_min != null && t.budget_max != null
+                          ? `₹${(t.budget_min / 100000).toFixed(1)}L - ₹${(t.budget_max / 100000).toFixed(1)}L`
+                          : "Budget Negotiable"}
                       </td>
                       <td className="p-3.5 font-bold text-emerald-400">{bidsCount} Bids</td>
                       <td className="p-3.5">
@@ -161,7 +171,9 @@ export default function AdminTenderManagementPage() {
                 <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-3.5 space-y-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Budget Range</span>
                   <p className="text-base font-black text-amber-400">
-                    ₹{(selectedTender.budget_min / 100000).toFixed(1)}L - ₹{(selectedTender.budget_max / 100000).toFixed(1)}L
+                    {selectedTender.budget_min != null && selectedTender.budget_max != null
+                      ? `₹${(selectedTender.budget_min / 100000).toFixed(1)}L - ₹${(selectedTender.budget_max / 100000).toFixed(1)}L`
+                      : "Negotiable"}
                   </p>
                 </div>
 
@@ -203,10 +215,14 @@ export default function AdminTenderManagementPage() {
                       >
                         <div className="space-y-0.5">
                           <p className="font-bold text-white">{capitalize(b.contractor?.company_name || b.contractor?.contact_person) || "Contractor Firm"}</p>
-                          <p className="text-[11px] text-slate-400">Duration: {b.estimated_completion_days} days</p>
+                          <p className="text-[11px] text-slate-400">Duration: {b.estimated_completion_days || 0} days</p>
                         </div>
                         <div className="text-right space-y-0.5">
-                          <p className="font-extrabold text-amber-400">₹{(b.quotation_amount / 100000).toFixed(2)} Lakhs</p>
+                          <p className="font-extrabold text-amber-400">
+                            {b.quotation_amount != null
+                              ? `₹${(b.quotation_amount / 100000).toFixed(2)} Lakhs`
+                              : "N/A"}
+                          </p>
                           <span className="text-[10px] font-bold text-emerald-400 uppercase">{b.status || "PENDING"}</span>
                         </div>
                       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Calendar, Building, Layers, ArrowUpRight, HardHat } from "lucide-react";
@@ -32,6 +32,34 @@ interface TenderCardProps {
 
 export function TenderCard({ tender }: TenderCardProps) {
   const [imgError, setImgError] = useState(false);
+  const [isInView, setIsInView] = useState(true);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || window.innerWidth >= 768) return;
+
+    // If browser supports CSS scroll-driven animations, let CSS compositor handle it natively
+    if (typeof CSS !== "undefined" && CSS.supports && CSS.supports("animation-timeline", "view()")) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      {
+        threshold: [0.15, 0.5, 0.85],
+        rootMargin: "-8% 0px -8% 0px",
+      }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   const imageUrl =
     tender.images && tender.images.length > 0
       ? tender.images[0].image_url
@@ -44,7 +72,12 @@ export function TenderCard({ tender }: TenderCardProps) {
     : "India";
 
   return (
-    <div className="group relative flex flex-col rounded-xl border bg-card text-card-foreground shadow-sm transition-all duration-300 hover:shadow-lg hover:border-orange-500/40 overflow-hidden">
+    <div
+      ref={cardRef}
+      className={`phonepe-tender-card group relative flex flex-col rounded-xl border bg-card text-card-foreground shadow-sm transition-all duration-500 ease-out hover:shadow-lg hover:border-orange-500/40 overflow-hidden will-change-transform ${
+        isInView ? "scale-100 opacity-100" : "scale-[0.95] opacity-90"
+      } md:scale-100 md:opacity-100`}
+    >
       {/* Image Header with Category Badge */}
       <div className="relative h-48 w-full bg-slate-900 overflow-hidden">
         {!imgError ? (

@@ -19,12 +19,16 @@ import {
   X,
   MessageSquare,
   User,
+  Award,
+  CreditCard,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { LogoutModal } from "@/components/dashboard/logout-modal";
 
 const ADMIN_NAV = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "Bid Awards / Connections", href: "/admin/connections", icon: Award },
+  { label: "Payments & Fees", href: "/admin/payments", icon: CreditCard },
   { label: "Direct User Messages", href: "/admin/messages", icon: MessageSquare },
   { label: "Support Requests", href: "/admin/support", icon: HelpCircle },
   { label: "Owner Approvals", href: "/admin/owners", icon: ShieldCheck },
@@ -69,9 +73,9 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 border-r border-slate-800 bg-slate-950 text-slate-100 shadow-2xl transition-transform duration-300 md:static md:translate-x-0 md:shadow-none ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 h-full border-r border-slate-800 bg-slate-950 text-slate-100 shadow-2xl transition-transform duration-300 md:sticky md:top-0 md:h-screen md:shrink-0 md:translate-x-0 md:shadow-none ${
           open ? "translate-x-0" : "-translate-x-full"
-        } flex flex-col justify-between`}
+        } flex flex-col justify-between overflow-hidden`}
       >
         <div className="flex flex-col h-full overflow-y-auto">
           {/* Sidebar Header - Logo & Brand name only (Unwanted 'Admin' label removed) */}

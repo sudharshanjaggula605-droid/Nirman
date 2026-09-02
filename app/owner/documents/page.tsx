@@ -73,15 +73,15 @@ export default function OwnerDocumentsPage() {
 
   return (
     <div className="space-y-6 pb-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Property & Project Documents</h1>
-          <p className="text-xs text-muted-foreground">Store property deeds, municipal permits, structural blueprints, and contractor agreements</p>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">Property & Project Documents</h1>
+          <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">Store property deeds, municipal permits, structural blueprints, and contractor agreements</p>
         </div>
 
         <button
           onClick={() => setShowUploadModal(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-700 transition-all shrink-0"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-700 transition-all w-full sm:w-auto shrink-0"
         >
           <Upload className="h-4 w-4" /> Upload Property Doc
         </button>

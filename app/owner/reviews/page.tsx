@@ -73,8 +73,8 @@ export default function OwnerReviewsPage() {
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
       {/* Header */}
       <div className="border-b pb-4">
-        <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Contractor Reviews & Ratings</h1>
-        <p className="text-xs text-muted-foreground">Rate completed milestone performance and review verified contractor quality.</p>
+        <h1 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">Contractor Reviews & Ratings</h1>
+        <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">Rate completed milestone performance and review verified contractor quality.</p>
       </div>
 
       {/* Review Submission Box */}

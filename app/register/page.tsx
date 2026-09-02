@@ -397,9 +397,8 @@ function RegisterForm() {
     setShowSuccessModal(false);
     window.location.href = `/account-pending?role=${role}`;
   };
-
   return (
-    <div className="container mx-auto flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
+    <div className="container mx-auto flex min-h-0 sm:min-h-[calc(100vh-8rem)] items-center justify-center px-3 sm:px-4 py-4 sm:py-12">
       {/* Confirmation Dialog / Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
@@ -428,14 +427,14 @@ function RegisterForm() {
         </div>
       )}
 
-      <div className="w-full max-w-2xl space-y-8 rounded-3xl border bg-card p-6 sm:p-10 shadow-xl">
+      <div className="w-full max-w-2xl space-y-5 sm:space-y-8 rounded-2xl sm:rounded-3xl border bg-card p-4 sm:p-10 shadow-xl">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1 text-xs font-bold text-orange-600">
+        <div className="text-center space-y-1 sm:space-y-2">
+          <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1 text-xs font-bold text-orange-600">
             <ShieldCheck className="h-3.5 w-3.5" /> Direct Verification & Bidding Platform
           </div>
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight">Create NIRMAN Account</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
+          <h1 className="text-xl sm:text-3xl font-extrabold text-foreground tracking-tight">Create NIRMAN Account</h1>
+          <p className="hidden sm:block text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
             Join India's verified construction marketplace. Create your account in simple steps.
           </p>
         </div>

@@ -42,12 +42,7 @@ export default function ContractorCompletedProjectsPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 border-b pb-4">
         <div>
-          <Link
-            href="/contractor/projects"
-            className="inline-flex items-center gap-1 text-xs font-bold text-orange-600 hover:underline mb-1"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to All Projects
-          </Link>
+
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">Completed Projects</h1>
             <span className="sm:hidden text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 border border-orange-500/20 shrink-0">

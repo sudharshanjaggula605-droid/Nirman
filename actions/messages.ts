@@ -284,40 +284,25 @@ export async function getUnreadMessageCountAction() {
 
     if (!user) return { count: 0 };
 
-    const unreadIds = new Set<string>();
-
-    // 1. Direct receiver_id match
-    const { data: directUnread } = await adminClient
-      .from("messages")
-      .select("id")
-      .eq("receiver_id", user.id)
-      .eq("is_read", false);
-
-    if (directUnread) {
-      directUnread.forEach((m) => unreadIds.add(m.id));
-    }
-
-    // 2. Conversation participants match (messages sent by OTHER participants in user's conversations)
+    // Get all conversations the user participates in
     const { data: userConvs } = await adminClient
       .from("conversation_participants")
       .select("conversation_id")
       .eq("user_id", user.id);
 
-    if (userConvs && userConvs.length > 0) {
-      const convIds = userConvs.map((c) => c.conversation_id);
-      const { data: convUnread } = await adminClient
-        .from("messages")
-        .select("id")
-        .in("conversation_id", convIds)
-        .neq("sender_id", user.id)
-        .eq("is_read", false);
+    if (!userConvs || userConvs.length === 0) return { count: 0 };
 
-      if (convUnread) {
-        convUnread.forEach((m) => unreadIds.add(m.id));
-      }
-    }
+    const convIds = userConvs.map((c: any) => c.conversation_id);
 
-    return { count: unreadIds.size };
+    // Count unread messages in those conversations sent by OTHER people
+    const { count } = await adminClient
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .in("conversation_id", convIds)
+      .neq("sender_id", user.id)
+      .eq("is_read", false);
+
+    return { count: count || 0 };
   } catch (err: any) {
     console.error("Unexpected error in getUnreadMessageCountAction:", err);
     return { count: 0 };

@@ -99,11 +99,10 @@ export function MobileBottomNav() {
 
   const isHomeActive = pathname === "/" && !moreOpen;
   const isPostProjectActive =
-    (pathname === "/owner/projects/new" ||
-      (pathname === "/register" && typeof window !== "undefined" && window.location.search.includes("owner"))) &&
+    (pathname.startsWith("/owner/projects/new") ||
+      (pathname === "/register" && postProjectHref.includes("/register"))) &&
     !moreOpen;
-  const isExploreActive =
-    (pathname === "/tenders" || pathname.startsWith("/tenders") || pathname === "/contractor/tenders") && !moreOpen;
+  const isExploreActive = pathname.startsWith("/tenders") && !moreOpen;
 
   return (
     <>
@@ -284,40 +283,32 @@ export function MobileBottomNav() {
           <Link
             href="/"
             onClick={() => setMoreOpen(false)}
-            className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl transition-colors duration-150 ${
               isHomeActive
-                ? "text-orange-600 font-bold"
-                : "text-muted-foreground hover:text-foreground active:scale-95"
+                ? "text-orange-600"
+                : "text-muted-foreground"
             }`}
           >
-            <div
-              className={`p-1 rounded-full transition-transform ${
-                isHomeActive ? "bg-orange-500/15 scale-110" : ""
-              }`}
-            >
-              <Home className="h-5 w-5" />
+            <div className={`p-1 rounded-full transition-all duration-150 ${isHomeActive ? "bg-orange-500/15" : ""}`}>
+              <Home className="h-[22px] w-[22px]" strokeWidth={isHomeActive ? 2.5 : 2} />
             </div>
-            <span className="text-[11px] tracking-tight mt-0.5 font-medium">Home</span>
+            <span className={`text-[10.5px] tracking-tight font-medium ${isHomeActive ? "font-semibold" : ""}`}>Home</span>
           </Link>
 
           {/* 2. Post a Project Option */}
           <Link
             href={postProjectHref}
             onClick={() => setMoreOpen(false)}
-            className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl transition-colors duration-150 ${
               isPostProjectActive
-                ? "text-orange-600 font-bold"
-                : "text-muted-foreground hover:text-foreground active:scale-95"
+                ? "text-orange-600"
+                : "text-muted-foreground"
             }`}
           >
-            <div
-              className={`p-1 rounded-full transition-transform ${
-                isPostProjectActive ? "bg-orange-500/15 scale-110" : ""
-              }`}
-            >
-              <PlusCircle className="h-5 w-5" />
+            <div className={`p-1 rounded-full transition-all duration-150 ${isPostProjectActive ? "bg-orange-500/15" : ""}`}>
+              <PlusCircle className="h-[22px] w-[22px]" strokeWidth={isPostProjectActive ? 2.5 : 2} />
             </div>
-            <span className="text-[11px] tracking-tight mt-0.5 truncate max-w-[75px] font-medium">
+            <span className={`text-[10.5px] tracking-tight font-medium truncate max-w-[72px] ${isPostProjectActive ? "font-semibold" : ""}`}>
               Post Project
             </span>
           </Link>
@@ -326,20 +317,16 @@ export function MobileBottomNav() {
           <Link
             href={exploreTendersHref}
             onClick={() => setMoreOpen(false)}
-            className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl transition-colors duration-150 ${
               isExploreActive
-                ? "text-orange-600 font-bold"
-                : "text-muted-foreground hover:text-foreground active:scale-95"
+                ? "text-orange-600"
+                : "text-muted-foreground"
             }`}
           >
-            <div
-              className={`p-1 rounded-full transition-transform ${
-                isExploreActive ? "bg-orange-500/15 scale-110" : ""
-              }`}
-            >
-              <Search className="h-5 w-5" />
+            <div className={`p-1 rounded-full transition-all duration-150 ${isExploreActive ? "bg-orange-500/15" : ""}`}>
+              <Search className="h-[22px] w-[22px]" strokeWidth={isExploreActive ? 2.5 : 2} />
             </div>
-            <span className="text-[11px] tracking-tight mt-0.5 truncate max-w-[80px] font-medium">
+            <span className={`text-[10.5px] tracking-tight font-medium ${isExploreActive ? "font-semibold" : ""}`}>
               Explore
             </span>
           </Link>
@@ -348,22 +335,18 @@ export function MobileBottomNav() {
           <button
             type="button"
             onClick={() => setMoreOpen((prev) => !prev)}
-            className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
+            className={`flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-xl transition-colors duration-150 cursor-pointer ${
               moreOpen
-                ? "text-orange-600 font-bold"
-                : "text-muted-foreground hover:text-foreground active:scale-95"
+                ? "text-orange-600"
+                : "text-muted-foreground"
             }`}
             aria-label="More navigation options"
             aria-expanded={moreOpen}
           >
-            <div
-              className={`p-1 rounded-full transition-transform ${
-                moreOpen ? "bg-orange-500/15 scale-110" : ""
-              }`}
-            >
-              <MoreHorizontal className="h-5 w-5" />
+            <div className={`p-1 rounded-full transition-all duration-150 ${moreOpen ? "bg-orange-500/15" : ""}`}>
+              <MoreHorizontal className="h-[22px] w-[22px]" strokeWidth={moreOpen ? 2.5 : 2} />
             </div>
-            <span className="text-[11px] tracking-tight mt-0.5 font-medium">More</span>
+            <span className={`text-[10.5px] tracking-tight font-medium ${moreOpen ? "font-semibold" : ""}`}>More</span>
           </button>
         </div>
       </nav>

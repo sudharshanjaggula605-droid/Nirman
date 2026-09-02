@@ -398,11 +398,6 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
           aria-label={t("header.direct_messages", "Direct User Messages & Chat")}
         >
           <MessageSquare className="h-4 w-4" />
-          {unreadChatCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] sm:h-5 sm:min-w-[20px] px-1 items-center justify-center rounded-full bg-orange-700 text-[9px] sm:text-[10px] font-extrabold leading-none text-white shadow-sm ring-2 ring-background animate-pulse">
-              {unreadChatCount > 99 ? "99+" : unreadChatCount}
-            </span>
-          )}
         </Link>
 
         {/* Notifications */}

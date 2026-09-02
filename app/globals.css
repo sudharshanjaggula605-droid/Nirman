@@ -121,3 +121,89 @@
     opacity: 0.92;
   }
 }
+
+/* NIRMAN Splash Logo Animation */
+@keyframes nirmanLogoPop {
+  0% {
+    transform: scale(0.8) translateY(10px);
+    opacity: 0;
+    filter: blur(4px);
+  }
+  50% {
+    transform: scale(1.06) translateY(-2px);
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+@keyframes nirmanHatTilt {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(-6deg);
+  }
+  70% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes nirmanTextReveal {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  40% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes nirmanProgressBar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes nirmanPageFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-nirman-logo {
+  animation: nirmanLogoPop 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-nirman-hat {
+  animation: nirmanHatTilt 1.2s ease-in-out infinite;
+}
+
+.animate-nirman-text {
+  animation: nirmanTextReveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-nirman-progress {
+  animation: nirmanProgressBar 1.4s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.animate-nirman-page-in {
+  animation: nirmanPageFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

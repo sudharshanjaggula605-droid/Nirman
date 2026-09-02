@@ -128,7 +128,8 @@ export function PaymentCheckoutModal({
           projectId: res.projectId,
         });
         if (onSuccessRedirect && res.projectId) {
-          setTimeout(() => onSuccessRedirect(res.projectId), 2500);
+          const validProjectId = res.projectId;
+          setTimeout(() => onSuccessRedirect(validProjectId), 2500);
         }
       }
     } catch (err: any) {

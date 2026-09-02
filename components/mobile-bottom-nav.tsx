@@ -95,10 +95,7 @@ export function MobileBottomNav() {
       ? "/owner/projects/new"
       : "/register?role=owner";
 
-  const exploreTendersHref =
-    user && profile?.role === "contractor"
-      ? "/contractor/tenders"
-      : "/#tenders";
+  const exploreTendersHref = "/tenders";
 
   const isHomeActive = pathname === "/" && !moreOpen;
   const isPostProjectActive =
@@ -106,7 +103,7 @@ export function MobileBottomNav() {
       (pathname === "/register" && typeof window !== "undefined" && window.location.search.includes("owner"))) &&
     !moreOpen;
   const isExploreActive =
-    (pathname === "/contractor/tenders" || pathname.startsWith("/tenders")) && !moreOpen;
+    (pathname === "/tenders" || pathname.startsWith("/tenders") || pathname === "/contractor/tenders") && !moreOpen;
 
   return (
     <>

@@ -8,8 +8,8 @@ import {
   ArrowUpDown,
   X,
   RefreshCw,
-  HardHat,
 } from "lucide-react";
+import { NirmanLogo } from "@/components/nirman-logo";
 import { TenderCard } from "@/components/tender-card";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -165,9 +165,7 @@ export default function ExploreTendersPage() {
         {/* ========================================================================= */}
         <div className="flex items-center justify-between gap-2 border-b pb-2 sm:pb-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-700 text-white shadow-sm">
-              <HardHat className="h-4 w-4" />
-            </div>
+            <NirmanLogo size="sm" className="hidden sm:flex" />
             <div>
               <h1 className="text-base sm:text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-1.5">
                 <span>Explore Tenders</span>
@@ -187,7 +185,7 @@ export default function ExploreTendersPage() {
               type="button"
               onClick={() => fetchActiveTenders(true)}
               disabled={refreshing}
-              className="p-1.5 sm:p-2 rounded-xl border bg-card hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="hidden sm:inline-flex p-1.5 sm:p-2 rounded-xl border bg-card hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               title="Refresh Tenders"
             >
               <RefreshCw className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${refreshing ? "animate-spin text-orange-600" : ""}`} />

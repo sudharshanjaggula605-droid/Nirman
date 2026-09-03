@@ -3,7 +3,8 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { HardHat, DollarSign, Clock, FileText, Send, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
+import { DollarSign, Clock, FileText, Send, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
+import { NirmanLogo } from "@/components/nirman-logo";
 import { submitBidAction } from "@/actions/bids";
 
 interface BidSubmissionPageProps {
@@ -163,9 +164,7 @@ export default function BidSubmissionPage({ params }: BidSubmissionPageProps) {
       <div className="rounded-2xl sm:rounded-3xl border bg-card p-6 sm:p-8 space-y-6 shadow-xl">
         <div className="flex items-center justify-between border-b pb-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-600 text-white shadow-md">
-              <HardHat className="h-5 w-5" />
-            </div>
+            <NirmanLogo size="md" />
             <div>
               <h1 className="text-xl font-bold text-foreground">Submit Construction Bid</h1>
               <p className="text-xs text-muted-foreground">

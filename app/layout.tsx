@@ -54,10 +54,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: "/images/nirman-logo.png" },
       { url: "/favicon.svg", type: "image/svg+xml" },
     ],
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    shortcut: "/images/nirman-logo.png",
+    apple: "/images/nirman-logo.png",
   },
   robots: {
     index: true,

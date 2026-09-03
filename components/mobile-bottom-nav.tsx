@@ -9,7 +9,6 @@ import {
   Search,
   MoreHorizontal,
   X,
-  HardHat,
   LayoutDashboard,
   LogOut,
   Moon,
@@ -19,6 +18,7 @@ import {
   Mail,
   ArrowRight,
 } from "lucide-react";
+import { NirmanLogo } from "@/components/nirman-logo";
 import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
 
@@ -136,9 +136,7 @@ export function MobileBottomNav() {
           {/* Header */}
           <div className="flex items-center justify-between border-b pb-3">
             <div className="flex items-center gap-2 font-bold text-base">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-600 text-white shadow-md shadow-orange-600/30">
-                <HardHat className="h-4 w-4" />
-              </div>
+              <NirmanLogo size="sm" />
               <span className="text-foreground font-black tracking-tight">NIRMAN Menu</span>
             </div>
 

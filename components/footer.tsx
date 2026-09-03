@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { HardHat, ShieldCheck, Building2, FileText } from "lucide-react";
+import { ShieldCheck, Building2, FileText } from "lucide-react";
+import { NirmanLogo } from "@/components/nirman-logo";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -11,9 +12,7 @@ export function Footer() {
       {/* ========================================================================= */}
       <div className="md:hidden px-4 pt-8 pb-24 text-center space-y-2.5 bg-gradient-to-b from-slate-900 to-black text-white border-t border-slate-800/80 shadow-inner">
         <div className="flex items-center justify-center gap-2 font-bold text-sm">
-          <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-orange-600 text-white shadow-md shadow-orange-600/30">
-            <HardHat className="h-4 w-4" />
-          </div>
+          <NirmanLogo size="sm" />
           <span className="font-black text-white tracking-tight text-base">NIRMAN</span>
         </div>
         <p className="text-xs text-slate-400 font-medium">
@@ -29,9 +28,7 @@ export function Footer() {
           {/* Brand Col */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 font-bold text-lg">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-600 text-white shadow-md shadow-orange-600/30">
-                <HardHat className="h-4 w-4" />
-              </div>
+              <NirmanLogo size="sm" />
               <span className="font-black text-foreground">NIRMAN</span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">

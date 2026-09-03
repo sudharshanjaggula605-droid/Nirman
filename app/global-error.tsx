@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AlertTriangle, RefreshCw, Home, Loader2 } from "lucide-react";
+import { NirmanLogo } from "@/components/nirman-logo";
 
 export default function GlobalError({
   error,
@@ -47,6 +48,9 @@ export default function GlobalError({
     <html lang="en">
       <body className="min-h-screen flex items-center justify-center p-6 bg-slate-950 text-slate-100 antialiased font-sans">
         <div className="max-w-md w-full rounded-3xl border border-slate-800 bg-slate-900 p-8 text-center space-y-6 shadow-2xl">
+          <div className="flex justify-center">
+            <NirmanLogo size="md" />
+          </div>
           <div className="h-16 w-16 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto border border-rose-500/20">
             {isRecovering ? (
               <Loader2 className="h-8 w-8 animate-spin text-orange-500" />

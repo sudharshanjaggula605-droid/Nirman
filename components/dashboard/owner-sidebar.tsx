@@ -15,9 +15,9 @@ import {
   User,
   Settings,
   LogOut,
-  HardHat,
   X,
 } from "lucide-react";
+import { NirmanLogo } from "@/components/nirman-logo";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { LogoutModal } from "@/components/dashboard/logout-modal";
@@ -85,9 +85,7 @@ export function OwnerSidebar({ open, onClose }: { open?: boolean; onClose?: () =
                 onClick={() => handleNavClick("/")}
                 className="flex items-center gap-2 font-bold text-base cursor-pointer"
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-700 text-white shadow-md">
-                  <HardHat className="h-4 w-4" />
-                </div>
+                <NirmanLogo size="sm" />
                 <span className="tracking-tight text-foreground">
                   {t("brand.nirman", "NIRMAN")}
                 </span>
@@ -154,9 +152,7 @@ export function OwnerSidebar({ open, onClose }: { open?: boolean; onClose?: () =
               title="Return to Main NIRMAN Landing Page"
               className="flex items-center gap-2 font-bold text-lg group hover:opacity-85 transition-all cursor-pointer"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-700 text-white shadow-md group-hover:scale-105 transition-transform">
-                <HardHat className="h-4 w-4" />
-              </div>
+              <NirmanLogo size="sm" className="group-hover:scale-105 transition-transform" />
               <span className="tracking-tight text-foreground group-hover:text-orange-600 transition-colors">
                 {t("brand.nirman", "NIRMAN")}
               </span>

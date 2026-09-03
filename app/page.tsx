@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { HardHat, ShieldCheck, ArrowRight, Building2, TrendingUp, Users, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, ArrowRight, Building2, TrendingUp, Users, CheckCircle2 } from "lucide-react";
+import { NirmanLogo } from "@/components/nirman-logo";
 import { TenderCard } from "@/components/tender-card";
 import { TenderSearch } from "@/components/tender-search";
 import { ContactSection } from "@/components/contact-section";
@@ -132,9 +133,7 @@ export default function HomePage() {
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-3">
-            <div className="h-14 w-14 rounded-2xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400">
-              <HardHat className="h-7 w-7" />
-            </div>
+            <NirmanLogo size="lg" />
             <div className="text-base font-bold text-white">NIRMAN Marketplace</div>
           </div>
         )}
@@ -226,9 +225,7 @@ export default function HomePage() {
                       />
                     ) : (
                       <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center space-y-3">
-                        <div className="h-16 w-16 rounded-2xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400">
-                          <HardHat className="h-8 w-8" />
-                        </div>
+                        <NirmanLogo size="lg" />
                         <div className="text-lg font-bold text-white">NIRMAN Marketplace</div>
                         <p className="text-xs text-slate-300 max-w-xs">Connecting verified property owners with top-rated civil contractors.</p>
                       </div>
@@ -301,7 +298,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed p-12 text-center space-y-3 bg-muted/20">
-            <HardHat className="h-10 w-10 text-muted-foreground mx-auto" />
+            <NirmanLogo size="lg" className="mx-auto" />
             <h3 className="font-bold text-base text-foreground">No active tenders in database yet</h3>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
               Property owners can post a project to publish live tenders instantly for contractors.

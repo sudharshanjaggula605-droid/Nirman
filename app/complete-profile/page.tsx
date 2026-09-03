@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { HardHat, UserCheck, Building2, AlertCircle } from "lucide-react";
+import { UserCheck, Building2, AlertCircle } from "lucide-react";
+import { NirmanLogo } from "@/components/nirman-logo";
 import { createClient } from "@/lib/supabase/client";
 
 export default function CompleteProfilePage() {
@@ -71,8 +72,8 @@ export default function CompleteProfilePage() {
     <div className="container mx-auto flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-6 rounded-2xl border bg-card p-8 shadow-xl">
         <div className="text-center space-y-2">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-orange-600 text-white shadow-md shadow-orange-600/30">
-            <HardHat className="h-6 w-6" />
+          <div className="flex justify-center">
+            <NirmanLogo size="lg" priority />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Complete Your Profile</h1>
           <p className="text-xs text-muted-foreground">

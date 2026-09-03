@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { HardHat } from "lucide-react";
+import { NirmanLogo } from "@/components/nirman-logo";
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -51,8 +51,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           <div className="absolute -inset-3 rounded-3xl bg-orange-600/25 blur-xl animate-pulse" />
 
           {/* Logo Container */}
-          <div className="relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-2xl bg-orange-600 text-white shadow-2xl shadow-orange-600/40">
-            <HardHat className="h-10 w-10 sm:h-12 sm:w-12 animate-nirman-hat" />
+          <div className="relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-3xl bg-white shadow-2xl shadow-orange-600/40 border-2 border-orange-500/30 p-2">
+            <NirmanLogo size={80} priority className="w-full h-full border-0 shadow-none animate-nirman-hat" />
           </div>
         </div>
 

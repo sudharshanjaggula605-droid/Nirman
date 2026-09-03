@@ -4,12 +4,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
-  HardHat,
   LogOut,
   LayoutDashboard,
   Moon,
   Sun,
 } from "lucide-react";
+import { NirmanLogo } from "@/components/nirman-logo";
 import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
 
@@ -66,9 +66,7 @@ export function Navbar() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-600 text-white shadow-md shadow-orange-600/30">
-            <HardHat className="h-5 w-5" />
-          </div>
+          <NirmanLogo size="sm" priority />
           <span className="text-foreground font-black">NIRMAN</span>
           <span className="text-xs font-semibold uppercase px-2 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
             Tenders

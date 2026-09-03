@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, RefreshCw, Home, Loader2 } from "lucide-react";
+import { NirmanLogo } from "@/components/nirman-logo";
 
 export default function ErrorBoundary({
   error,
@@ -46,6 +47,9 @@ export default function ErrorBoundary({
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-6 bg-background text-foreground">
       <div className="max-w-md w-full rounded-3xl border border-border p-8 text-center space-y-6 shadow-2xl bg-card">
+        <div className="flex justify-center">
+          <NirmanLogo size="md" />
+        </div>
         <div className="h-14 w-14 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto border border-rose-500/20">
           {isRecovering ? (
             <Loader2 className="h-7 w-7 animate-spin text-orange-500" />

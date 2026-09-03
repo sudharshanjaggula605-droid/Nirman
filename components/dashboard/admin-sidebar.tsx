@@ -15,7 +15,6 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Shield,
   X,
   MessageSquare,
   User,
@@ -23,6 +22,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { NirmanLogo } from "@/components/nirman-logo";
 import { LogoutModal } from "@/components/dashboard/logout-modal";
 
 const ADMIN_NAV = [
@@ -85,9 +85,7 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
               title="Return to Main NIRMAN Landing Page"
               className="flex items-center gap-2 font-bold text-lg group hover:opacity-85 transition-all cursor-pointer"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-600 text-white shadow-md group-hover:scale-105 transition-transform">
-                <Shield className="h-4 w-4" />
-              </div>
+              <NirmanLogo size="sm" className="group-hover:scale-105 transition-transform" />
               <span className="tracking-tight text-white group-hover:text-amber-400 transition-colors">NIRMAN</span>
             </Link>
             {onClose && (

@@ -28,6 +28,7 @@ import {
   Camera,
 } from "lucide-react";
 import { registerOwnerAction, registerContractorAction } from "@/actions/auth";
+import { NirmanLogo } from "@/components/nirman-logo";
 import { capitalizeWords, formatIndianPhoneNumber, isValidIndianPhoneNumber } from "@/lib/utils";
 
 function RegisterForm() {
@@ -430,6 +431,9 @@ function RegisterForm() {
       <div className="w-full max-w-2xl space-y-5 sm:space-y-8 rounded-2xl sm:rounded-3xl border bg-card p-4 sm:p-10 shadow-xl">
         {/* Header */}
         <div className="text-center space-y-1 sm:space-y-2">
+          <div className="flex justify-center pb-1">
+            <NirmanLogo size="lg" priority className="shadow-md shadow-orange-500/10" />
+          </div>
           <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1 text-xs font-bold text-orange-600">
             <ShieldCheck className="h-3.5 w-3.5" /> Direct Verification & Bidding Platform
           </div>

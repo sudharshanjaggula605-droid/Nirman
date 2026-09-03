@@ -3,7 +3,8 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { HardHat, LogIn, AlertCircle, Mail, Lock } from "lucide-react";
+import { LogIn, AlertCircle, Mail, Lock } from "lucide-react";
+import { NirmanLogo } from "@/components/nirman-logo";
 import { loginAction } from "@/actions/auth";
 
 function LoginForm() {
@@ -52,8 +53,8 @@ function LoginForm() {
       <div className="relative w-full max-w-md space-y-6 rounded-3xl border border-border/60 bg-card/80 p-8 sm:p-10 shadow-2xl backdrop-blur-xl">
         {/* Brand Header */}
         <div className="text-center space-y-3">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 text-white shadow-lg shadow-orange-500/30 ring-4 ring-orange-500/10">
-            <HardHat className="h-7 w-7" />
+          <div className="flex justify-center">
+            <NirmanLogo size="lg" priority className="ring-4 ring-orange-500/10 shadow-lg shadow-orange-500/20" />
           </div>
           <div className="space-y-1">
             <h1 className="text-3xl font-extrabold tracking-tight text-foreground">

@@ -2,7 +2,8 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { HardHat, Building2, MapPin, Layers, Upload, ArrowRight, ArrowLeft, Check, AlertCircle, FileText, X } from "lucide-react";
+import { Building2, MapPin, Layers, Upload, ArrowRight, ArrowLeft, Check, AlertCircle, FileText, X } from "lucide-react";
+import { NirmanLogo } from "@/components/nirman-logo";
 import { createProjectAndPublishTender } from "@/actions/projects";
 
 export default function CreateProjectPage() {
@@ -92,9 +93,7 @@ export default function CreateProjectPage() {
     <div className="container mx-auto px-4 py-10 space-y-8 max-w-3xl">
       <div className="rounded-2xl border bg-card p-6 sm:p-8 space-y-8 shadow-xl">
         <div className="flex items-center gap-3 border-b pb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-600 text-white shadow-md">
-            <HardHat className="h-5 w-5" />
-          </div>
+          <NirmanLogo size="md" />
           <div>
             <h1 className="text-xl font-bold text-foreground">Create Project & Publish Tender</h1>
             <p className="text-xs text-muted-foreground">Multi-step construction project creation wizard</p>

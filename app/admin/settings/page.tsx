@@ -106,6 +106,7 @@ export default function AdminSettingsPage() {
 
   // Section 5: Security State
   const [passwordState, setPasswordState] = useState({
+    currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
@@ -212,10 +213,16 @@ export default function AdminSettingsPage() {
       return;
     }
 
+    if (!profile.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email.trim())) {
+      setProfileErrorMsg("Please enter a valid email address.");
+      return;
+    }
+
     setSavingProfile(true);
     try {
       const fd = new FormData();
       fd.append("full_name", profile.full_name.trim());
+      fd.append("email", profile.email.trim().toLowerCase());
       fd.append("phone", profile.phone.trim());
       if (avatarFile) {
         fd.append("avatar", avatarFile);
@@ -223,10 +230,12 @@ export default function AdminSettingsPage() {
 
       const res = await updateAdminProfileAction(fd);
       if (res.success) {
-        setProfileSuccessMsg("Admin profile updated successfully!");
-        if (res.avatar_url) {
-          setProfile((p) => ({ ...p, avatar_url: res.avatar_url }));
-        }
+        setProfileSuccessMsg("Admin profile and credentials updated successfully!");
+        setProfile((p) => ({
+          ...p,
+          email: res.email || p.email,
+          avatar_url: res.avatar_url || p.avatar_url,
+        }));
         setTimeout(() => setProfileSuccessMsg(null), 4000);
       } else {
         setProfileErrorMsg(res.error || "Unable to update profile. Please try again.");
@@ -311,15 +320,22 @@ export default function AdminSettingsPage() {
       setPasswordErrorMsg("Password confirmation does not match.");
       return;
     }
+    if (passwordState.currentPassword && passwordState.currentPassword === passwordState.newPassword) {
+      setPasswordErrorMsg("New password must be different from current password.");
+      return;
+    }
 
     setSavingPassword(true);
     try {
-      const res = await updateAdminPasswordAction(passwordState.newPassword);
+      const res = await updateAdminPasswordAction(
+        passwordState.newPassword,
+        passwordState.currentPassword || undefined
+      );
       if (res.success) {
-        setPasswordSuccessMsg("Password updated successfully!");
-        setPasswordState({ newPassword: "", confirmPassword: "" });
+        setPasswordSuccessMsg("Password updated successfully! Next time you log in, please use your new password.");
+        setPasswordState({ currentPassword: "", newPassword: "", confirmPassword: "" });
         await loadSecurityAudit();
-        setTimeout(() => setPasswordSuccessMsg(null), 4000);
+        setTimeout(() => setPasswordSuccessMsg(null), 5000);
       } else {
         setPasswordErrorMsg(res.error || "Unable to update password.");
       }
@@ -508,16 +524,18 @@ export default function AdminSettingsPage() {
             {/* Email Address */}
             <div className="space-y-1.5">
               <label htmlFor="admin-email" className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 text-amber-500" /> Email Address
+                <Mail className="h-3.5 w-3.5 text-amber-500" /> Email Address <span className="text-rose-500">*</span>
               </label>
               <input
                 id="admin-email"
                 type="email"
                 value={profile.email}
-                disabled
-                className="w-full rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-400 cursor-not-allowed"
+                onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
+                placeholder="admin@nirman.com"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500"
+                required
               />
-              <span className="text-[11px] text-slate-400">Primary Supabase Auth credentials account</span>
+              <span className="text-[11px] text-slate-400">Used for Admin Dashboard login and platform notifications</span>
             </div>
 
             {/* Phone Number */}
@@ -940,30 +958,45 @@ export default function AdminSettingsPage() {
             </div>
 
             <form onSubmit={handlePasswordChange} className="space-y-4 pt-2">
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Current Password <span className="text-slate-500 font-normal lowercase">(optional verification)</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={passwordState.currentPassword}
+                    onChange={(e) =>
+                      setPasswordState((p) => ({ ...p, currentPassword: e.target.value }))
+                    }
+                    placeholder="Enter current password if known"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     New Password
                   </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={passwordState.newPassword}
-                      onChange={(e) =>
-                        setPasswordState((p) => ({ ...p, newPassword: e.target.value }))
-                      }
-                      placeholder="••••••••"
-                      className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500 pr-10"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={passwordState.newPassword}
+                    onChange={(e) =>
+                      setPasswordState((p) => ({ ...p, newPassword: e.target.value }))
+                    }
+                    placeholder="••••••••"
+                    className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-1">

@@ -18,29 +18,21 @@ export async function loginAction(formData: FormData) {
   const supabase = createClient();
   const adminClient = createAdminClient();
 
-  // Special Auto-Provisioning & Guaranteed Login for Admin accounts (admin@nirman.com)
+  // Bootstrap initial admin ONLY if no admin account exists in the platform at all
   if (email.toLowerCase().includes("admin")) {
     try {
-      console.log(`[AUTH ADMIN SETUP] Ensuring admin account for ${email}...`);
-      
-      const { data: usersData, error: listErr } = await adminClient.auth.admin.listUsers();
-      if (listErr) console.error(`[AUTH ADMIN LIST ERROR] ${listErr.message}`);
+      // Check if the platform ALREADY has an admin
+      const { data: existingAdmins } = await adminClient
+        .from("profiles")
+        .select("id")
+        .eq("role", "admin")
+        .limit(1);
 
-      const existingUser = usersData?.users?.find(
-        (u) => u.email?.toLowerCase() === email.toLowerCase()
-      );
+      const hasAdminInSystem = existingAdmins && existingAdmins.length > 0;
 
-      let targetUserId: string | null = null;
-
-      if (existingUser) {
-        targetUserId = existingUser.id;
-        const { error: updateErr } = await adminClient.auth.admin.updateUserById(existingUser.id, {
-          password: password,
-          email_confirm: true,
-          user_metadata: { full_name: "NIRMAN Admin", role: "admin" },
-        });
-        if (updateErr) console.error(`[AUTH ADMIN UPDATE ERROR] ${updateErr.message}`);
-      } else {
+      // If an admin already exists, NEVER auto-provision or resurrect an old email address
+      if (!hasAdminInSystem) {
+        console.log(`[AUTH ADMIN SETUP] No admin found in system. Initializing first admin for ${email}...`);
         const { data: newUser, error: createErr } = await adminClient.auth.admin.createUser({
           email: email,
           password: password,
@@ -51,18 +43,14 @@ export async function loginAction(formData: FormData) {
         if (createErr) console.error(`[AUTH ADMIN CREATE ERROR] ${createErr.message}`);
 
         if (newUser?.user) {
-          targetUserId = newUser.user.id;
+          await adminClient.from("profiles").upsert({
+            id: newUser.user.id,
+            full_name: "NIRMAN Admin",
+            email: email,
+            role: "admin",
+            status: "approved",
+          }, { onConflict: "id" });
         }
-      }
-
-      if (targetUserId) {
-        await adminClient.from("profiles").upsert({
-          id: targetUserId,
-          full_name: "NIRMAN Admin",
-          email: email,
-          role: "admin",
-          status: "approved",
-        }, { onConflict: "id" });
       }
     } catch (err: any) {
       console.error(`[AUTH ADMIN PROVISIONING WARNING] ${err.message}`);

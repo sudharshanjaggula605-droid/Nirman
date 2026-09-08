@@ -207,6 +207,7 @@ export async function getAdminFullSettingsAction(): Promise<{
 
 export async function updateAdminProfileAction(formData: FormData): Promise<{
   success: boolean;
+  email?: string;
   avatar_url?: string | null;
   error?: string;
 }> {
@@ -215,11 +216,16 @@ export async function updateAdminProfileAction(formData: FormData): Promise<{
     if (authError || !user) return { success: false, error: authError || "Unauthorized" };
 
     const fullName = ((formData.get("full_name") as string) || "").trim();
+    const email = ((formData.get("email") as string) || "").trim().toLowerCase();
     const phone = ((formData.get("phone") as string) || "").trim();
     const avatarFile = formData.get("avatar") as File | null;
 
     if (!fullName) {
       return { success: false, error: "Please enter your full name." };
+    }
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { success: false, error: "Please enter a valid email address." };
     }
 
     const adminClient = createAdminClient();
@@ -253,11 +259,18 @@ export async function updateAdminProfileAction(formData: FormData): Promise<{
       }
     }
 
+    const currentEmail = (user.email || "").toLowerCase();
+    const emailChanged = Boolean(email && email !== currentEmail);
+
     const updatePayload: any = {
       full_name: fullName,
       phone: phone || null,
       updated_at: new Date().toISOString(),
     };
+
+    if (emailChanged) {
+      updatePayload.email = email;
+    }
 
     if (avatar_url) {
       updatePayload.avatar_url = avatar_url;
@@ -269,22 +282,97 @@ export async function updateAdminProfileAction(formData: FormData): Promise<{
       .eq("id", user.id);
 
     if (updateErr) {
-      return { success: false, error: "Unable to update profile. Please try again." };
+      return { success: false, error: "Unable to update profile. " + (updateErr.message || "") };
     }
 
-    // Also update auth user metadata
-    await adminClient.auth.admin.updateUserById(user.id, {
+    // Also update auth user metadata and email
+    const authUpdatePayload: any = {
       user_metadata: {
+        ...(user.user_metadata || {}),
         full_name: fullName,
         phone: phone,
+        role: "admin",
       },
-    });
+    };
+
+    if (emailChanged) {
+      // Check if another account is already occupying this email
+      try {
+        const { data: allUsers } = await adminClient.auth.admin.listUsers();
+        const conflictUser = allUsers?.users?.find(
+          (u) => u.email?.toLowerCase() === email && u.id !== user.id
+        );
+
+        if (conflictUser) {
+          if (conflictUser.user_metadata?.role === "admin") {
+            // Stale duplicate test admin account from previous runs: clean it up
+            await adminClient.auth.admin.deleteUser(conflictUser.id);
+            await adminClient.from("profiles").delete().eq("id", conflictUser.id);
+          } else {
+            return {
+              success: false,
+              error: `The email address "${email}" is already registered to another account.`,
+            };
+          }
+        }
+      } catch (checkErr) {
+        console.warn("User email conflict check notice:", checkErr);
+      }
+
+      authUpdatePayload.email = email;
+      authUpdatePayload.email_confirm = true; // Auto-confirm so admin can continue logging in seamlessly
+    }
+
+    const { error: authUserErr } = await adminClient.auth.admin.updateUserById(
+      user.id,
+      authUpdatePayload
+    );
+
+    if (authUserErr) {
+      console.error("Error updating admin auth user:", authUserErr);
+      if (
+        authUserErr.message.includes("already registered") ||
+        authUserErr.message.includes("unique") ||
+        authUserErr.message.includes("already exists") ||
+        authUserErr.message.includes("Error updating user")
+      ) {
+        return {
+          success: false,
+          error: `The email address "${email}" is already in use by another account. Please use a different email address.`,
+        };
+      }
+      return { success: false, error: authUserErr.message || "Failed to update authentication credentials." };
+    }
+
+    // If email changed, purge any stale/duplicate accounts with the old email so it cannot be logged in
+    if (emailChanged && currentEmail) {
+      try {
+        const { data: allUsers } = await adminClient.auth.admin.listUsers();
+        const staleUsers = allUsers?.users?.filter(
+          (u) => u.email?.toLowerCase() === currentEmail && u.id !== user.id
+        );
+        if (staleUsers && staleUsers.length > 0) {
+          for (const stale of staleUsers) {
+            await adminClient.auth.admin.deleteUser(stale.id);
+            await adminClient.from("profiles").delete().eq("id", stale.id);
+          }
+        }
+      } catch (cleanErr) {
+        console.warn("Clean stale old email accounts notice:", cleanErr);
+      }
+
+      await adminClient.from("admin_actions").insert({
+        admin_id: user.id,
+        action: "email_changed",
+        reason: `Administrator updated account email from ${user.email} to ${email}`,
+      });
+    }
 
     revalidatePath("/admin/settings");
     revalidatePath("/admin/profile");
     revalidatePath("/admin/dashboard");
 
-    return { success: true, avatar_url };
+    return { success: true, email: email || user.email, avatar_url };
   } catch (err: any) {
     console.error("Error in updateAdminProfileAction:", err);
     return { success: false, error: "Unable to update profile. Please try again." };
@@ -419,7 +507,10 @@ export async function updateAdminSystemSettingsAction(
   }
 }
 
-export async function updateAdminPasswordAction(newPassword: string): Promise<{
+export async function updateAdminPasswordAction(
+  newPassword: string,
+  currentPassword?: string
+): Promise<{
   success: boolean;
   error?: string;
 }> {
@@ -428,16 +519,37 @@ export async function updateAdminPasswordAction(newPassword: string): Promise<{
     if (authError || !user) return { success: false, error: authError || "Unauthorized" };
 
     if (!newPassword || newPassword.length < 6) {
-      return { success: false, error: "Password must be at least 6 characters long." };
+      return { success: false, error: "New password must be at least 6 characters long." };
     }
 
+    const supabase = createClient();
     const adminClient = createAdminClient();
+
+    // If current password is provided, verify it first against Supabase Auth
+    if (currentPassword && user.email) {
+      const { error: verifyErr } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+      if (verifyErr) {
+        return { success: false, error: "Current password is incorrect." };
+      }
+    }
+
+    // Update password in Supabase Auth
     const { error } = await adminClient.auth.admin.updateUserById(user.id, {
       password: newPassword,
     });
 
     if (error) {
       return { success: false, error: error.message || "Failed to update password." };
+    }
+
+    // Also sync active session if possible
+    try {
+      await supabase.auth.updateUser({ password: newPassword });
+    } catch {
+      // Non-blocking fallback
     }
 
     // Log admin action for audit

@@ -15,6 +15,7 @@ import {
   Building,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { updateAdminPasswordAction, updateAdminProfileAction } from "@/actions/admin-settings";
 
 export default function AdminProfilePage() {
   const [profile, setProfile] = useState<any>({
@@ -73,23 +74,36 @@ export default function AdminProfilePage() {
     setSaving(true);
     setMessage(null);
 
+    if (!profile.full_name?.trim()) {
+      setMessage("Please enter full name.");
+      setSaving(false);
+      return;
+    }
+    if (!profile.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email.trim())) {
+      setMessage("Please enter a valid email address.");
+      setSaving(false);
+      return;
+    }
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from("profiles")
-          .update({
-            full_name: profile.full_name,
-            phone: profile.phone,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", user.id);
+      const fd = new FormData();
+      fd.append("full_name", profile.full_name.trim());
+      fd.append("email", profile.email.trim().toLowerCase());
+      fd.append("phone", (profile.phone || "").trim());
+
+      const res = await updateAdminProfileAction(fd);
+      if (!res.success) {
+        throw new Error(res.error || "Failed to update profile.");
       }
-      setMessage("Admin profile updated successfully!");
-      setTimeout(() => setMessage(null), 4000);
-    } catch (err) {
+
+      setMessage("Admin profile & credentials updated successfully!");
+      if (res.email) {
+        setProfile((p: any) => ({ ...p, email: res.email }));
+      }
+      setTimeout(() => setMessage(null), 5000);
+    } catch (err: any) {
       console.error("Error saving profile:", err);
-      setMessage("Error updating profile. Please try again.");
+      setMessage(err.message || "Error updating profile. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -107,13 +121,13 @@ export default function AdminProfilePage() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: passwordState.newPassword,
-      });
-      if (error) throw error;
-      setPasswordMsg("Password changed successfully!");
+      const res = await updateAdminPasswordAction(passwordState.newPassword);
+      if (!res.success) {
+        throw new Error(res.error || "Failed to update password.");
+      }
+      setPasswordMsg("Password changed successfully! Please use this new password on your next login.");
       setPasswordState({ newPassword: "", confirmPassword: "" });
-      setTimeout(() => setPasswordMsg(null), 4000);
+      setTimeout(() => setPasswordMsg(null), 5000);
     } catch (err: any) {
       setPasswordMsg(err.message || "Failed to update password.");
     }
@@ -178,15 +192,17 @@ export default function AdminProfilePage() {
 
             <div className="space-y-1.5">
               <label className="font-semibold text-white flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 text-amber-500" /> Email Address
+                <Mail className="h-3.5 w-3.5 text-amber-500" /> Email Address <span className="text-rose-500">*</span>
               </label>
               <input
                 type="email"
                 value={profile.email}
-                disabled
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/60 p-2.5 text-slate-400 cursor-not-allowed"
+                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                placeholder="admin@nirman.com"
+                className="w-full rounded-xl border border-slate-800 bg-slate-900 p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                required
               />
-              <span className="text-[10px] text-slate-500">Root email tied to primary platform auth</span>
+              <span className="text-[10px] text-slate-500">Used for Admin authentication and notifications</span>
             </div>
 
             <div className="space-y-1.5">

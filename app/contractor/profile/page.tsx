@@ -12,13 +12,17 @@ import {
   Star,
   ShieldCheck,
   CheckCircle2,
+  AlertCircle,
   FileText,
   Save,
   Clock,
   ImageIcon,
   PlusCircle,
+  Info,
+  Lock,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { updateContractorProfileAction } from "@/actions/user-settings";
 
 export default function ContractorProfilePage() {
   const [profile, setProfile] = useState<any>({
@@ -39,10 +43,12 @@ export default function ContractorProfilePage() {
     total_reviews: 24,
   });
 
+  const [initialEmail, setInitialEmail] = useState("");
   const [portfolioPhotos, setPortfolioPhotos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -80,10 +86,12 @@ export default function ContractorProfilePage() {
           user.phone ||
           "";
 
+        const currentEmail = prof?.email || user.email || cont?.email || "";
+
         setProfile({
           company_name: cont?.company_name || prof?.full_name || user.user_metadata?.company_name || "",
           contact_person: cont?.contact_person || prof?.full_name || user.user_metadata?.contact_person || user.user_metadata?.full_name || "",
-          email: prof?.email || user.email || cont?.email || "",
+          email: currentEmail,
           phone: registeredPhone,
           city: cont?.city || prof?.city || user.user_metadata?.city || "",
           state: cont?.state || prof?.state || user.user_metadata?.state || "",
@@ -97,6 +105,7 @@ export default function ContractorProfilePage() {
           average_rating: cont?.average_rating || 5.0,
           total_reviews: cont?.total_reviews || 0,
         });
+        setInitialEmail(currentEmail);
       } catch (err) {
         console.error("Error loading contractor profile:", err);
       } finally {
@@ -110,49 +119,40 @@ export default function ContractorProfilePage() {
     e.preventDefault();
     setSaving(true);
     setMessage(null);
+    setErrorMessage(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const res = await updateContractorProfileAction({
+        company_name: profile.company_name,
+        contact_person: profile.contact_person,
+        email: profile.email,
+        phone: profile.phone,
+        city: profile.city,
+        state: profile.state,
+        years_of_experience: profile.years_of_experience,
+        total_projects: profile.total_projects,
+        specializations: profile.specializations || profile.description,
+        gst_number: profile.gst_number,
+        license_number: profile.license_number,
+        description: profile.description,
+      });
 
-      // Synchronize phone and personal details across profiles table
-      await supabase
-        .from("profiles")
-        .update({
-          full_name: profile.contact_person,
-          phone: profile.phone,
-          city: profile.city,
-          state: profile.state,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
-
-      // Synchronize contractors table
-      await supabase
-        .from("contractors")
-        .upsert({
-          id: user.id,
-          company_name: profile.company_name,
-          contact_person: profile.contact_person,
-          phone: profile.phone,
-          email: profile.email,
-          city: profile.city,
-          state: profile.state,
-          years_of_experience: profile.years_of_experience,
-          total_projects: profile.total_projects,
-          gst_number: profile.gst_number || null,
-          license_number: profile.license_number || null,
-          description: profile.description,
-          updated_at: new Date().toISOString(),
-        });
-
-      setMessage("Contractor profile updated successfully!");
+      if (!res.success) {
+        setErrorMessage(res.error || "Failed to update profile.");
+      } else {
+        setMessage(res.message || "Contractor profile updated successfully!");
+        if (res.email) {
+          setProfile((prev: any) => ({ ...prev, email: res.email }));
+          setInitialEmail(res.email);
+        }
+      }
     } catch (err: any) {
-      setMessage("Error updating profile: " + err.message);
+      setErrorMessage("Error updating profile: " + (err.message || "Please try again."));
     } finally {
       setSaving(false);
     }
   };
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
@@ -168,6 +168,13 @@ export default function ContractorProfilePage() {
         <div className="rounded-xl bg-emerald-500/10 p-4 text-xs font-bold text-emerald-600 border border-emerald-500/20 flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           <span>{message}</span>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="rounded-xl bg-destructive/10 p-4 text-xs font-bold text-destructive border border-destructive/20 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
@@ -248,14 +255,15 @@ export default function ContractorProfilePage() {
         {/* Company & Contact Info */}
         <div className="rounded-2xl border bg-card p-6 space-y-4 shadow-sm">
           <div className="text-xs font-bold uppercase tracking-wider text-orange-600 flex items-center gap-2 border-b pb-3">
-            <Building2 className="h-4 w-4" /> Essential Company Information
+            <Building2 className="h-4 w-4" /> Essential Company Information & Credentials
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Company Name</label>
+              <label className="text-xs font-bold text-foreground">Company Name *</label>
               <input
                 type="text"
+                required
                 value={profile.company_name}
                 onChange={(e) => setProfile({ ...profile, company_name: e.target.value })}
                 className="w-full rounded-xl border bg-background/60 px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
@@ -263,9 +271,10 @@ export default function ContractorProfilePage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Contact Person Name</label>
+              <label className="text-xs font-bold text-foreground">Contact Person Name *</label>
               <input
                 type="text"
+                required
                 value={profile.contact_person}
                 onChange={(e) => setProfile({ ...profile, contact_person: e.target.value })}
                 className="w-full rounded-xl border bg-background/60 px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
@@ -275,24 +284,47 @@ export default function ContractorProfilePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Email Address</label>
-              <input
-                type="email"
-                readOnly
-                value={profile.email}
-                className="w-full rounded-xl border bg-muted/50 px-3.5 py-2.5 text-sm text-muted-foreground cursor-not-allowed"
-              />
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <span>Account Login Email *</span>
+                  <span className="text-[10px] font-semibold text-orange-600 bg-orange-500/10 px-2 py-0.5 rounded-full border border-orange-500/20">
+                    Authentication Credential
+                  </span>
+                </label>
+                {profile.email?.trim().toLowerCase() !== initialEmail?.toLowerCase() && (
+                  <span className="text-[10px] font-bold text-amber-600 flex items-center gap-1">
+                    <Info className="h-3 w-3" /> Will update login email
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="email"
+                  required
+                  value={profile.email}
+                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                  placeholder="contractor@example.com"
+                  className="w-full rounded-xl border bg-background/60 pl-10 pr-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed pt-0.5">
+                This email is your active login address. If changed, your previous email will be invalidated immediately and you must use this new email to log in.
+              </p>
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-foreground">Phone Number</label>
-              <input
-                type="tel"
-                value={profile.phone}
-                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                placeholder={loading ? "Loading registered number..." : "Registered Contact Number"}
-                className="w-full rounded-xl border bg-background/60 px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-              />
+              <div className="relative">
+                <Phone className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="tel"
+                  value={profile.phone}
+                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                  placeholder={loading ? "Loading registered number..." : "Registered Contact Number"}
+                  className="w-full rounded-xl border bg-background/60 pl-10 pr-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                />
+              </div>
             </div>
           </div>
         </div>

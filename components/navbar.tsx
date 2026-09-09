@@ -67,8 +67,8 @@ export function Navbar() {
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight">
           <NirmanLogo size="sm" priority />
-          <span className="text-foreground font-black">NIRMAN</span>
-          <span className="text-xs font-semibold uppercase px-2 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
+          <span className="text-foreground font-black hidden sm:inline">NIRMAN</span>
+          <span className="text-xs font-semibold uppercase px-2 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 hidden sm:inline-flex">
             Tenders
           </span>
         </Link>

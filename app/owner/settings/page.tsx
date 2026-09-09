@@ -1,14 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { Key, Globe, Check, Save, AlertCircle, Loader2, Lock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Key, Globe, Check, Save, AlertCircle, Loader2, Lock, Mail, User, Phone, ShieldCheck, Info } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { changeUserPasswordAction } from "@/actions/auth";
+import { updateOwnerProfileAction } from "@/actions/user-settings";
+import { createClient } from "@/lib/supabase/client";
 
 export default function OwnerSettingsPage() {
   const { language, setLanguage, languages, t } = useLanguage();
   const [selectedLang, setSelectedLang] = useState(language);
   const [prefSaved, setPrefSaved] = useState(false);
+
+  // Account & Email State
+  const [accountName, setAccountName] = useState("");
+  const [accountEmail, setAccountEmail] = useState("");
+  const [initialEmail, setInitialEmail] = useState("");
+  const [accountPhone, setAccountPhone] = useState("");
+  const [accountLoading, setAccountLoading] = useState(true);
+  const [accountSaving, setAccountSaving] = useState(false);
+  const [accountSuccess, setAccountSuccess] = useState<string | null>(null);
+  const [accountError, setAccountError] = useState<string | null>(null);
 
   // Change Password State
   const [currentPassword, setCurrentPassword] = useState("");
@@ -18,6 +30,34 @@ export default function OwnerSettingsPage() {
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadAccountData() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
+
+          const email = prof?.email || user.email || "";
+          setAccountEmail(email);
+          setInitialEmail(email);
+          setAccountName(prof?.full_name || user.user_metadata?.full_name || "");
+          setAccountPhone(prof?.phone || user.user_metadata?.phone || "");
+        }
+      } catch (err) {
+        console.error("Error loading account data in settings:", err);
+      } finally {
+        setAccountLoading(false);
+      }
+    }
+    loadAccountData();
+  }, []);
 
   const handleLanguageSelect = (code: string) => {
     setSelectedLang(code);
@@ -31,6 +71,46 @@ export default function OwnerSettingsPage() {
     setPrefSaved(true);
     setTimeout(() => setPrefSaved(false), 4000);
   };
+
+  const handleUpdateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAccountError(null);
+    setAccountSuccess(null);
+
+    if (!accountName.trim()) {
+      setAccountError("Full name is required.");
+      return;
+    }
+    if (!accountEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(accountEmail.trim())) {
+      setAccountError("Please enter a valid email address.");
+      return;
+    }
+
+    setAccountSaving(true);
+    try {
+      const res = await updateOwnerProfileAction({
+        full_name: accountName.trim(),
+        email: accountEmail.trim(),
+        phone: accountPhone.trim(),
+      });
+
+      if (!res.success) {
+        setAccountError(res.error || "Failed to update account details.");
+      } else {
+        setAccountSuccess(res.message || "Account credentials updated successfully!");
+        if (res.email) {
+          setAccountEmail(res.email);
+          setInitialEmail(res.email);
+        }
+        setTimeout(() => setAccountSuccess(null), 6000);
+      }
+    } catch (err: any) {
+      setAccountError(err.message || "Failed to update account.");
+    } finally {
+      setAccountSaving(false);
+    }
+  };
+
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,6 +231,113 @@ export default function OwnerSettingsPage() {
           </div>
         </div>
 
+        {/* Account & Login Email Section */}
+        <div className="space-y-4 pt-2 border-t">
+          <div className="border-b pb-2 flex items-center justify-between">
+            <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+              <Mail className="h-4 w-4 text-orange-600" />
+              <span>Account Credentials & Login Email</span>
+            </h3>
+            <span className="text-[10px] text-muted-foreground">Supabase Auth Credential</span>
+          </div>
+
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Update your registered account name and login email address. If you change your email, your previous email will be invalidated immediately and you will only be able to sign in using your new email address.
+          </p>
+
+          {accountSuccess && (
+            <div className="p-3.5 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-bold flex items-center gap-2">
+              <Check className="h-4 w-4 shrink-0" />
+              <span>{accountSuccess}</span>
+            </div>
+          )}
+
+          {accountError && (
+            <div className="p-3.5 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 font-medium flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{accountError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleUpdateAccount} className="space-y-4 max-w-xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="font-bold text-foreground text-xs">Full Name *</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    required
+                    value={accountName}
+                    onChange={(e) => setAccountName(e.target.value)}
+                    placeholder="Your Full Name"
+                    className="w-full rounded-xl border border-border bg-background pl-9 pr-3.5 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-foreground text-xs">Phone Number</label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="tel"
+                    value={accountPhone}
+                    onChange={(e) => setAccountPhone(e.target.value)}
+                    placeholder="Contact Number"
+                    className="w-full rounded-xl border border-border bg-background pl-9 pr-3.5 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="font-bold text-foreground text-xs flex items-center gap-1.5">
+                  <span>Login Email Address *</span>
+                </label>
+                {accountEmail?.trim().toLowerCase() !== initialEmail?.toLowerCase() && (
+                  <span className="text-[10px] font-bold text-amber-600 flex items-center gap-1">
+                    <Info className="h-3 w-3" /> Will update login email
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="email"
+                  required
+                  value={accountEmail}
+                  onChange={(e) => setAccountEmail(e.target.value)}
+                  placeholder="owner@nirman.com"
+                  className="w-full rounded-xl border border-border bg-background pl-9 pr-3.5 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Your current password will continue to work with this new email address.
+              </p>
+            </div>
+
+            <div className="flex justify-start pt-1">
+              <button
+                type="submit"
+                disabled={accountSaving}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-700 px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-800 disabled:opacity-50 transition-all cursor-pointer"
+              >
+                {accountSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Updating Credentials...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" /> Save Account & Email
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
         {/* Change Password Section */}
         <div className="space-y-4 pt-2 border-t">
           <div className="border-b pb-2 flex items-center justify-between">
@@ -160,6 +347,7 @@ export default function OwnerSettingsPage() {
             </h3>
             <span className="text-[10px] text-muted-foreground">Supabase Auth Verified</span>
           </div>
+
 
           {passwordSuccess && (
             <div className="p-3.5 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-bold flex items-center gap-2">

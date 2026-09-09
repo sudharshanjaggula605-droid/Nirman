@@ -367,9 +367,10 @@ export async function registerAction(formData: FormData) {
 export async function changeUserPasswordAction(formData: FormData) {
   try {
     const supabase = createClient();
+    const adminClient = createAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user || !user.email) {
+    if (!user) {
       return { error: "Authentication session expired. Please log in again." };
     }
 
@@ -393,9 +394,17 @@ export async function changeUserPasswordAction(formData: FormData) {
       return { error: "Passwords do not match.", field: "confirm_password" };
     }
 
+    // Fetch the freshest email directly from auth.users to ensure no stale-session email issue
+    const { data: authUserData } = await adminClient.auth.admin.getUserById(user.id);
+    const emailToVerify = authUserData?.user?.email || user.email;
+
+    if (!emailToVerify) {
+      return { error: "Unable to identify user account email. Please re-login." };
+    }
+
     // 1. Verify current password securely against Supabase Auth credentials
     const { error: verifyError } = await supabase.auth.signInWithPassword({
-      email: user.email,
+      email: emailToVerify,
       password: currentPassword,
     });
 
@@ -403,18 +412,40 @@ export async function changeUserPasswordAction(formData: FormData) {
       return { error: "Current password is incorrect.", field: "current_password" };
     }
 
-    // 2. Update password securely via Supabase Auth
-    const { error: updateError } = await supabase.auth.updateUser({
+    // 2. Update password permanently in Supabase Auth via Admin Client
+    const { error: adminUpdateError } = await adminClient.auth.admin.updateUserById(user.id, {
       password: newPassword,
     });
 
-    if (updateError) {
-      return { error: updateError.message };
+    if (adminUpdateError) {
+      return { error: adminUpdateError.message || "Failed to update password." };
     }
 
-    return { success: true, message: "Password changed successfully." };
+    // 3. Also sync active session
+    try {
+      await supabase.auth.updateUser({
+        password: newPassword,
+      });
+    } catch {
+      // Non-blocking fallback
+    }
+
+    // 4. Log security action for audit
+    try {
+      await adminClient.from("admin_actions").insert({
+        admin_id: user.id,
+        action: "password_changed",
+        reason: "User updated account password from security settings",
+      });
+    } catch {}
+
+    return {
+      success: true,
+      message: "Password changed successfully! Your old password has been invalidated. Please use your new password for all future logins.",
+    };
   } catch (err: any) {
     console.error("Error changing password:", err);
     return { error: err.message || "Failed to change password." };
   }
 }
+

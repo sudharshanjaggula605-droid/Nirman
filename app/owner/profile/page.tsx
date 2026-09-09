@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Mail, Phone, MapPin, Globe, Save, CheckCircle2, ShieldCheck } from "lucide-react";
+import { User, Mail, Phone, MapPin, Globe, Save, CheckCircle2, ShieldCheck, AlertCircle, Info, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { updateOwnerProfileAction } from "@/actions/user-settings";
 
 export default function OwnerProfilePage() {
   const [profile, setProfile] = useState<any>({
@@ -17,9 +18,11 @@ export default function OwnerProfilePage() {
     about_me: "",
     avatar_url: "",
   });
+  const [initialEmail, setInitialEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -49,9 +52,11 @@ export default function OwnerProfilePage() {
           user.phone ||
           "";
 
+        const currentEmail = prof?.email || user.email || "";
+
         setProfile({
           full_name: prof?.full_name || owner?.full_name || user.user_metadata?.full_name || "",
-          email: prof?.email || user.email || "",
+          email: currentEmail,
           phone: registeredPhone,
           address: owner?.address || prof?.address || "",
           city: owner?.city || prof?.city || user.user_metadata?.city || "",
@@ -61,6 +66,7 @@ export default function OwnerProfilePage() {
           about_me: owner?.about_me || "",
           avatar_url: prof?.avatar_url || "",
         });
+        setInitialEmail(currentEmail);
       } catch (err) {
         console.error("Error loading profile:", err);
       } finally {
@@ -87,46 +93,37 @@ export default function OwnerProfilePage() {
     e.preventDefault();
     setSaving(true);
     setMessage(null);
+    setErrorMessage(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const res = await updateOwnerProfileAction({
+        full_name: profile.full_name,
+        email: profile.email,
+        phone: profile.phone,
+        address: profile.address,
+        city: profile.city,
+        state: profile.state,
+        pincode: profile.pincode,
+        google_maps_url: profile.google_maps_url,
+        about_me: profile.about_me,
+      });
 
-      // Update profiles
-      await supabase
-        .from("profiles")
-        .update({
-          full_name: profile.full_name,
-          phone: profile.phone,
-          address: profile.address,
-          city: profile.city,
-          state: profile.state,
-          pincode: profile.pincode,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
-
-      // Update owners
-      await supabase
-        .from("owners")
-        .upsert({
-          id: user.id,
-          full_name: profile.full_name,
-          phone: profile.phone,
-          address: profile.address,
-          city: profile.city,
-          state: profile.state,
-          pincode: profile.pincode,
-          updated_at: new Date().toISOString(),
-        });
-
-      setMessage("Profile saved successfully!");
+      if (!res.success) {
+        setErrorMessage(res.error || "Failed to update profile.");
+      } else {
+        setMessage(res.message || "Profile updated successfully!");
+        if (res.email) {
+          setProfile((prev: any) => ({ ...prev, email: res.email }));
+          setInitialEmail(res.email);
+        }
+      }
     } catch (err: any) {
-      setMessage("Error saving profile: " + err.message);
+      setErrorMessage("Error saving profile: " + (err.message || "Please try again."));
     } finally {
       setSaving(false);
     }
   };
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
@@ -157,11 +154,18 @@ export default function OwnerProfilePage() {
         </div>
       )}
 
+      {errorMessage && (
+        <div className="rounded-xl bg-destructive/10 p-4 text-xs font-bold text-destructive border border-destructive/20 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
       <form onSubmit={handleSave} className="space-y-6">
         {/* Personal Information Section */}
         <div className="rounded-2xl border bg-card p-6 space-y-4 shadow-sm">
           <div className="text-xs font-bold uppercase tracking-wider text-orange-600 flex items-center gap-2 border-b pb-3">
-            <User className="h-4 w-4" /> Personal Information
+            <User className="h-4 w-4" /> Personal & Account Information
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-6 pt-2">
@@ -179,11 +183,12 @@ export default function OwnerProfilePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Full Name</label>
+              <label className="text-xs font-bold text-foreground">Full Name *</label>
               <div className="relative">
                 <User className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
                 <input
                   type="text"
+                  required
                   value={profile.full_name}
                   onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
                   placeholder="John Doe"
@@ -208,16 +213,33 @@ export default function OwnerProfilePage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">Email Address (Read Only)</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <span>Account Login Email *</span>
+                <span className="text-[10px] font-semibold text-orange-600 bg-orange-500/10 px-2 py-0.5 rounded-full border border-orange-500/20">
+                  Authentication Credential
+                </span>
+              </label>
+              {profile.email?.trim().toLowerCase() !== initialEmail?.toLowerCase() && (
+                <span className="text-[10px] font-bold text-amber-600 flex items-center gap-1">
+                  <Info className="h-3 w-3" /> Email will change on save
+                </span>
+              )}
+            </div>
             <div className="relative">
               <Mail className="absolute left-3.5 top-3 h-4 w-4 text-muted-foreground" />
               <input
                 type="email"
-                readOnly
+                required
                 value={profile.email}
-                className="w-full rounded-xl border bg-muted/50 pl-10 pr-3.5 py-2.5 text-sm text-muted-foreground cursor-not-allowed"
+                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                placeholder="owner@example.com"
+                className="w-full rounded-xl border bg-background/60 pl-10 pr-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50"
               />
             </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed pt-0.5">
+              This email is your active login address. If changed, your previous email will be invalidated immediately and you must use this new email to log in.
+            </p>
           </div>
         </div>
 

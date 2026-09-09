@@ -30,7 +30,42 @@ export default function HomePage() {
   const supabase = createClient();
 
   useEffect(() => {
+    async function checkAuthSession() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role, status")
+            .eq("id", user.id)
+            .single();
+
+          if (profile?.status === "approved") {
+            const role = profile.role?.toLowerCase();
+            if (role === "admin") {
+              window.location.replace("/admin/dashboard");
+              return;
+            }
+            if (role === "owner") {
+              window.location.replace("/owner/dashboard");
+              return;
+            }
+            if (role === "contractor") {
+              window.location.replace("/contractor/dashboard");
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Session check notice:", err);
+      }
+    }
+    checkAuthSession();
+  }, []);
+
+  useEffect(() => {
     async function loadInitialData() {
+
       try {
         // 1. Fetch Categories
         const { data: catData } = await supabase
@@ -119,8 +154,8 @@ export default function HomePage() {
 
   return (
     <div className="pb-16 overflow-x-clip">
-      {/* Mobile Sticky Hero Background Layer (PhonePe App Style) */}
-      <div className="lg:hidden sticky top-16 z-0 w-full h-[240px] sm:h-[300px] overflow-hidden bg-slate-950">
+      {/* Mobile Sticky Hero Background Layer (PhonePe App Style) - starts at top-0 behind transparent navbar */}
+      <div className="lg:hidden sticky top-0 z-0 w-full h-[280px] sm:h-[340px] overflow-hidden bg-slate-950">
         {!heroImgError ? (
           <Image
             src="/hero-construction.jpg"
@@ -137,7 +172,8 @@ export default function HomePage() {
             <div className="text-base font-bold text-white">NIRMAN Marketplace</div>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+        {/* Top-to-bottom and bottom-to-top gradients for optimal contrast with transparent navbar & live card */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/85 pointer-events-none" />
         
         <div className="absolute bottom-3 left-3 right-3 p-3 rounded-xl bg-black/65 backdrop-blur-md border border-white/10 text-white space-y-0.5 z-10">
           <div className="flex items-center justify-between text-[11px] font-semibold text-orange-400">

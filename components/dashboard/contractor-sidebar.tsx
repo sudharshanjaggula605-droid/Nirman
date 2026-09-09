@@ -23,6 +23,7 @@ import { NirmanLogo } from "@/components/nirman-logo";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { LogoutModal } from "@/components/dashboard/logout-modal";
+import { logoutAction } from "@/actions/auth";
 
 function ContractorSidebarInner({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
@@ -38,10 +39,13 @@ function ContractorSidebarInner({ open, onClose }: { open?: boolean; onClose?: (
   };
 
   const handleConfirmSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+    try {
+      await supabase.auth.signOut();
+      await logoutAction();
+    } catch {}
+    window.location.href = "/";
   };
+
 
   const handleNavClick = (href: string) => {
     if (onClose) onClose();

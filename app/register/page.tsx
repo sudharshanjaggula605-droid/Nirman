@@ -26,8 +26,10 @@ import {
   Check,
   Upload,
   Camera,
+  RefreshCw,
 } from "lucide-react";
 import { registerOwnerAction, registerContractorAction } from "@/actions/auth";
+import { sanitizeUserFacingError } from "@/lib/errors";
 import { NirmanLogo } from "@/components/nirman-logo";
 import { capitalizeWords, formatIndianPhoneNumber, isValidIndianPhoneNumber } from "@/lib/utils";
 
@@ -342,7 +344,7 @@ function RegisterForm() {
 
         const res = await registerContractorAction(formData);
         if (res && res.error) {
-          setError(res.error);
+          setError(sanitizeUserFacingError(res.error, "Unable to complete registration. Please check your details and try again."));
           setLoading(false);
           return;
         }
@@ -356,7 +358,7 @@ function RegisterForm() {
         return;
       }
       console.error("Registration error:", err);
-      setError(err.message || "Unable to complete registration. Please try again.");
+      setError(sanitizeUserFacingError(err, "Unable to complete registration. Please check your details and try again."));
     } finally {
       setLoading(false);
     }
@@ -501,9 +503,23 @@ function RegisterForm() {
         </div>
 
         {error && (
-          <div className="flex items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-xs font-semibold text-destructive animate-in fade-in">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>{error}</span>
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-xs font-semibold text-destructive animate-in fade-in">
+            <div className="flex items-center gap-2.5">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                const form = document.querySelector("form");
+                if (form) form.requestSubmit();
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-destructive/20 hover:bg-destructive/30 text-destructive text-[11px] font-bold transition-colors cursor-pointer shrink-0"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Retry
+            </button>
           </div>
         )}
 

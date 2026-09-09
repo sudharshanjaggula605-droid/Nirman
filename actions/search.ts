@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { sanitizeUserFacingError } from "@/lib/errors";
 
 export interface SearchResult {
   id: string;
@@ -260,7 +261,6 @@ export async function dashboardSearchAction(
 
     return { results: deduped.slice(0, 10) };
   } catch (err: any) {
-    console.error("dashboardSearchAction error:", err);
-    return { results: [], error: err.message };
+    return { results: [], error: sanitizeUserFacingError(err, "Search temporarily unavailable.") };
   }
 }

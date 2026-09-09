@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { sanitizeUserFacingError } from "@/lib/errors";
 
 import { sendApprovalNotification } from "@/lib/notifications/service";
 
@@ -166,8 +167,7 @@ export async function deleteUserAction(targetUserId: string) {
 
     return { success: true };
   } catch (err: any) {
-    console.error("Error in deleteUserAction:", err);
-    return { error: err.message || "Failed to delete user account." };
+    return { error: sanitizeUserFacingError(err, "Unable to delete user account. Please try again.") };
   }
 }
 
@@ -369,8 +369,7 @@ export async function getAllAdminUsersAction(): Promise<{
 
     return { success: true, users: combinedUsers };
   } catch (err: any) {
-    console.error("Unexpected error in getAllAdminUsersAction:", err);
-    return { success: false, users: [], error: err.message };
+    return { success: false, users: [], error: sanitizeUserFacingError(err, "Unable to load users list. Please try again.") };
   }
 }
 
@@ -399,7 +398,7 @@ export async function setUserStatusAction(targetUserId: string, newStatus: strin
     ]);
 
     if (profileErr.error) {
-      return { error: profileErr.error.message };
+      return { error: sanitizeUserFacingError(profileErr.error, "Unable to update user status. Please try again.") };
     }
 
     revalidatePath("/admin/users");
@@ -409,7 +408,7 @@ export async function setUserStatusAction(targetUserId: string, newStatus: strin
 
     return { success: true };
   } catch (err: any) {
-    return { error: err.message || "Failed to update user status." };
+    return { error: sanitizeUserFacingError(err, "Unable to update user status. Please try again.") };
   }
 }
 
@@ -547,7 +546,6 @@ export async function getAdminConnectionsAction(): Promise<{
 
     return { success: true, connections: formatted };
   } catch (err: any) {
-    console.error("Error in getAdminConnectionsAction:", err);
-    return { success: false, connections: [], error: err.message };
+    return { success: false, connections: [], error: sanitizeUserFacingError(err, "Unable to load connections. Please try again.") };
   }
 }

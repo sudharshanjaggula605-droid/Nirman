@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { approveUserAction, deleteUserAction, getAllAdminUsersAction } from "@/actions/admin";
 import { DeleteConfirmModal } from "@/components/admin/delete-confirm-modal";
 import { UserDetailsModal } from "@/components/admin/user-details-modal";
+import { sanitizeUserFacingError } from "@/lib/errors";
 
 export default function AdminContractorsPage() {
   const [contractors, setContractors] = useState<any[]>([]);
@@ -64,7 +65,7 @@ export default function AdminContractorsPage() {
         .eq("id", id);
 
       if (error) {
-        setMessage("Error rejecting contractor: " + error.message);
+        setMessage(sanitizeUserFacingError(error, "Unable to reject contractor application. Please try again."));
         // Revert on error
         setContractors((prev) =>
           prev.map((c) => (c.id === id ? { ...c, status: "pending" } : c))
@@ -73,7 +74,7 @@ export default function AdminContractorsPage() {
         setMessage("Contractor application rejected.");
       }
     } catch (err: any) {
-      setMessage("Error: " + err.message);
+      setMessage(sanitizeUserFacingError(err, "Unable to reject contractor application. Please try again."));
     }
   };
 

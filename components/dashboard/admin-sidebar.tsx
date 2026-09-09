@@ -24,6 +24,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { NirmanLogo } from "@/components/nirman-logo";
 import { LogoutModal } from "@/components/dashboard/logout-modal";
+import { logoutAction } from "@/actions/auth";
 
 const ADMIN_NAV = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -58,10 +59,13 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
   };
 
   const handleConfirmSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+    try {
+      await supabase.auth.signOut();
+      await logoutAction();
+    } catch {}
+    window.location.href = "/";
   };
+
 
   return (
     <>

@@ -8,8 +8,6 @@ import {
   Bell,
   MessageSquare,
   Menu,
-  Sun,
-  Moon,
   CheckCircle2,
   Clock,
   Globe,
@@ -24,13 +22,14 @@ import {
   X,
   Loader2,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
 import { getUnreadMessageCountAction } from "@/actions/messages";
 import { getUnreadNotificationCountAction } from "@/actions/notifications";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { dashboardSearchAction, type SearchResult } from "@/actions/search";
 import { LogoutModal } from "@/components/dashboard/logout-modal";
+import { logoutAction } from "@/actions/auth";
+
 
 interface DashboardHeaderProps {
   onMenuToggle?: () => void;
@@ -57,9 +56,7 @@ const BADGE_COLORS: Record<string, string> = {
 
 export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
   const { language, setLanguage, languages, t } = useLanguage();
-  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
@@ -81,7 +78,6 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
   const supabase = createClient();
 
   useEffect(() => {
-    setMounted(true);
     async function loadUser() {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       setUser(currentUser);
@@ -219,10 +215,13 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
   };
 
   const handleConfirmSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+    try {
+      await supabase.auth.signOut();
+      await logoutAction();
+    } catch {}
+    window.location.href = "/";
   };
+
 
   const getStatusBadge = () => {
     if (!profile) return null;
@@ -415,16 +414,6 @@ export function DashboardHeader({ onMenuToggle, title }: DashboardHeaderProps) {
           )}
         </Link>
 
-        {/* Theme Toggle */}
-        {mounted && (
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-2 rounded-xl border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            aria-label={t("header.toggle_theme", "Toggle Theme")}
-          >
-            {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
-          </button>
-        )}
 
         {/* User Badge with Interactive Dropdown */}
         {profile && (

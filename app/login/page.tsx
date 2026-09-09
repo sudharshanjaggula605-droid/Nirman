@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+
 import { useSearchParams } from "next/navigation";
-import { LogIn, AlertCircle, Mail, Lock } from "lucide-react";
+import { LogIn, AlertCircle, Mail, Lock, RefreshCw } from "lucide-react";
 import { NirmanLogo } from "@/components/nirman-logo";
 import { loginAction } from "@/actions/auth";
+import { createClient } from "@/lib/supabase/client";
+import { sanitizeUserFacingError } from "@/lib/errors";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -15,6 +18,46 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [emailVal, setEmailVal] = useState("");
   const [passwordVal, setPasswordVal] = useState("");
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function checkExistingSession() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role, status")
+            .eq("id", user.id)
+            .single();
+
+          if (profile?.status === "approved") {
+            const role = profile.role?.toLowerCase();
+            if (role === "admin") {
+              const dest = redirectTo && redirectTo.startsWith("/admin") ? redirectTo : "/admin/dashboard";
+              window.location.replace(dest);
+              return;
+            }
+            if (role === "owner") {
+              const dest = redirectTo && (redirectTo.startsWith("/owner") || redirectTo.startsWith("/tenders")) ? redirectTo : "/owner/dashboard";
+              window.location.replace(dest);
+              return;
+            }
+            if (role === "contractor") {
+              const dest = redirectTo && (redirectTo.startsWith("/contractor") || redirectTo.startsWith("/tenders")) ? redirectTo : "/contractor/dashboard";
+              window.location.replace(dest);
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Session check notice in login:", err);
+      }
+    }
+    checkExistingSession();
+  }, [redirectTo]);
+
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,7 +73,7 @@ function LoginForm() {
       const result = await loginAction(formData);
 
       if (result?.error) {
-        setError(result.error);
+        setError(sanitizeUserFacingError(result.error, "Invalid email or password. Please try again."));
         setLoading(false);
       } else if (result?.redirectUrl) {
         window.location.href = result.redirectUrl;
@@ -39,7 +82,7 @@ function LoginForm() {
       if (err.message && err.message.includes("NEXT_REDIRECT")) {
         return;
       }
-      setError(err.message || "Authentication failed.");
+      setError(sanitizeUserFacingError(err, "Unable to sign in. Please try again."));
       setLoading(false);
     }
   };
@@ -66,21 +109,28 @@ function LoginForm() {
           </div>
         </div>
 
-        {/* Diagnostic Error Banner */}
+        {/* User-Friendly Error Alert */}
         {error && (
-          <div className="rounded-2xl bg-destructive/10 p-4 text-xs font-medium text-destructive border border-destructive/20 space-y-1.5 shadow-inner">
+          <div className="rounded-2xl bg-destructive/10 p-4 text-xs font-medium text-destructive border border-destructive/20 space-y-2 shadow-inner animate-in fade-in">
             <div className="flex items-center gap-2 font-bold text-sm">
               <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
-              <span>Authentication Error</span>
+              <span>Authentication Notice</span>
             </div>
             <p className="text-[11px] leading-relaxed text-destructive/90">{error}</p>
-
-            {error.includes("Supabase") && (
-              <div className="pt-2 border-t border-destructive/20 text-[10px] text-muted-foreground space-y-1">
-                <span className="font-semibold text-foreground">Troubleshooting Tip:</span>
-                <p>Ensure your real Supabase URL and key are placed in <code className="bg-muted px-1 rounded">.env.local</code>.</p>
-              </div>
-            )}
+            <div className="pt-1 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  const form = document.querySelector("form");
+                  if (form) form.requestSubmit();
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-destructive/15 hover:bg-destructive/25 text-destructive font-bold text-xs transition-colors cursor-pointer"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Retry
+              </button>
+            </div>
           </div>
         )}
 

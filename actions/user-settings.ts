@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { sanitizeUserFacingError } from "@/lib/errors";
 
 export interface OwnerProfilePayload {
   full_name: string;
@@ -266,8 +267,7 @@ export async function updateOwnerProfileAction(payload: OwnerProfilePayload): Pr
       message,
     };
   } catch (err: any) {
-    console.error("Error in updateOwnerProfileAction:", err);
-    return { success: false, error: err.message || "Failed to update profile. Please try again." };
+    return { success: false, error: sanitizeUserFacingError(err, "Failed to update profile. Please try again later.") };
   }
 }
 
@@ -482,7 +482,6 @@ export async function updateContractorProfileAction(payload: ContractorProfilePa
       message,
     };
   } catch (err: any) {
-    console.error("Error in updateContractorProfileAction:", err);
-    return { success: false, error: err.message || "Failed to update profile. Please try again." };
+    return { success: false, error: sanitizeUserFacingError(err, "Failed to update profile. Please try again later.") };
   }
 }

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { approveUserAction, deleteUserAction, getAllAdminUsersAction } from "@/actions/admin";
 import { DeleteConfirmModal } from "@/components/admin/delete-confirm-modal";
 import { UserDetailsModal } from "@/components/admin/user-details-modal";
+import { sanitizeUserFacingError } from "@/lib/errors";
 
 export default function AdminOwnerApprovalsPage() {
   const [owners, setOwners] = useState<any[]>([]);
@@ -64,7 +65,7 @@ export default function AdminOwnerApprovalsPage() {
         .eq("id", id);
 
       if (error) {
-        setMessage("Error rejecting owner: " + error.message);
+        setMessage(sanitizeUserFacingError(error, "Unable to reject owner application. Please try again."));
         // Revert on error
         setOwners((prev) =>
           prev.map((o) => (o.id === id ? { ...o, status: "pending" } : o))
@@ -73,7 +74,7 @@ export default function AdminOwnerApprovalsPage() {
         setMessage("Owner application rejected.");
       }
     } catch (err: any) {
-      setMessage("Error: " + err.message);
+      setMessage(sanitizeUserFacingError(err, "Unable to reject owner application. Please try again."));
     }
   };
 

@@ -12,6 +12,7 @@ import {
 import { NirmanLogo } from "@/components/nirman-logo";
 import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
+import { logoutAction } from "@/actions/auth";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -45,13 +46,51 @@ export function Navbar() {
     loadUser();
   }, [pathname]);
 
+  const isLanding = pathname === "/";
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    setIsScrolled(false);
+  }, [pathname]);
+
+  // Efficient passive scroll listener for navbar background transition on mobile
+  useEffect(() => {
+    let ticking = false;
+    let lastScrolled = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+          const scrolled = currentScrollY > 15;
+          if (scrolled !== lastScrolled) {
+            lastScrolled = scrolled;
+            setIsScrolled(scrolled);
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+      await logoutAction();
+    } catch {}
     setUser(null);
     setProfile(null);
-    router.push("/login");
-    router.refresh();
+    window.location.href = "/";
   };
+
 
   const getDashboardPath = () => {
     if (!profile) return "/login";
@@ -62,7 +101,17 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
+    <header
+      className={`w-full z-50 transition-all duration-300 ease-out ${
+        isLanding
+          ? `fixed md:sticky top-0 inset-x-0 ${
+              isScrolled
+                ? "bg-background/95 backdrop-blur-md border-b border-border shadow-sm"
+                : "bg-transparent border-b border-transparent shadow-none md:bg-background/80 md:backdrop-blur-md md:border-border"
+            }`
+          : "sticky top-0 border-b border-border bg-background/80 backdrop-blur-md"
+      }`}
+    >
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight">
@@ -158,7 +207,11 @@ export function Navbar() {
           {mounted && (
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-2 rounded-xl border bg-card text-card-foreground cursor-pointer"
+              className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                isLanding && !isScrolled
+                  ? "bg-black/35 backdrop-blur-md border-white/20 text-white hover:bg-black/50"
+                  : "bg-card text-card-foreground border-border hover:bg-accent"
+              }`}
               aria-label="Toggle theme"
             >
               {theme === "dark" ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}

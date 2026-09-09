@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { sanitizeUserFacingError } from "@/lib/errors";
 
 /**
  * Get or create a conversation between two users in public.conversations & public.conversation_participants
@@ -120,8 +121,7 @@ export async function sendMessageAction(
       },
     };
   } catch (err: any) {
-    console.error("Unexpected error in sendMessageAction:", err);
-    return { error: err.message || "Failed to send message" };
+    return { error: sanitizeUserFacingError(err, "Unable to send message. Please try again.") };
   }
 }
 
@@ -144,13 +144,12 @@ export async function getChatContactsAction() {
 
     if (error) {
       console.error("Error fetching chat profiles:", error);
-      return { error: error.message, contacts: [] };
+      return { error: sanitizeUserFacingError(error, "Unable to load chat contacts. Please try again."), contacts: [] };
     }
 
     return { success: true, currentUserId: user.id, contacts: profiles || [] };
   } catch (err: any) {
-    console.error("Unexpected error in getChatContactsAction:", err);
-    return { error: err.message, contacts: [] };
+    return { error: sanitizeUserFacingError(err, "Unable to load chat contacts. Please try again."), contacts: [] };
   }
 }
 
@@ -200,8 +199,7 @@ export async function getConversationMessagesAction(otherUserId: string) {
 
     return { success: true, messages: formattedMessages };
   } catch (err: any) {
-    console.error("Unexpected error in getConversationMessagesAction:", err);
-    return { error: err.message, messages: [] };
+    return { error: sanitizeUserFacingError(err, "Unable to load messages. Please try again."), messages: [] };
   }
 }
 
@@ -267,8 +265,7 @@ export async function getAdminMessagesAction(params: {
 
     return { success: true, messages: formattedMessages };
   } catch (err: any) {
-    console.error("Unexpected error in getAdminMessagesAction:", err);
-    return { error: err.message, messages: [] };
+    return { error: sanitizeUserFacingError(err, "Unable to load messages. Please try again."), messages: [] };
   }
 }
 

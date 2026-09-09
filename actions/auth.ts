@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { sanitizeUserFacingError } from "@/lib/errors";
 
 export async function loginAction(formData: FormData) {
   const email = (formData.get("email") as string)?.trim();
@@ -64,13 +65,7 @@ export async function loginAction(formData: FormData) {
   });
 
   if (error) {
-    console.error(`[AUTH LOGIN ERROR] ${error.message}`);
-    if (error.message.includes("fetch failed") || error.message.includes("ENOTFOUND")) {
-      return {
-        error: "Cannot reach Supabase server. Please verify your NEXT_PUBLIC_SUPABASE_URL in .env.local.",
-      };
-    }
-    return { error: "Authentication failed: " + error.message };
+    return { error: sanitizeUserFacingError(error, "Invalid email or password. Please try again.") };
   }
 
   if (data.user) {
@@ -180,13 +175,7 @@ export async function registerOwnerAction(formData: FormData) {
   });
 
   if (error) {
-    console.error(`[AUTH REGISTER OWNER ERROR] ${error.message}`);
-    if (error.message.includes("fetch failed") || error.message.includes("ENOTFOUND")) {
-      return {
-        error: "Cannot reach Supabase server. Please verify your NEXT_PUBLIC_SUPABASE_URL in .env.local.",
-      };
-    }
-    return { error: error.message };
+    return { error: sanitizeUserFacingError(error, "Unable to complete registration. Please try again.") };
   }
 
   if (data.user) {
@@ -279,13 +268,7 @@ export async function registerContractorAction(formData: FormData) {
   });
 
   if (error) {
-    console.error(`[AUTH REGISTER CONTRACTOR ERROR] ${error.message}`);
-    if (error.message.includes("fetch failed") || error.message.includes("ENOTFOUND")) {
-      return {
-        error: "Cannot reach Supabase server. Please verify your NEXT_PUBLIC_SUPABASE_URL in .env.local.",
-      };
-    }
-    return { error: error.message };
+    return { error: sanitizeUserFacingError(error, "Unable to complete registration. Please try again.") };
   }
 
   if (data.user) {
@@ -444,8 +427,19 @@ export async function changeUserPasswordAction(formData: FormData) {
       message: "Password changed successfully! Your old password has been invalidated. Please use your new password for all future logins.",
     };
   } catch (err: any) {
-    console.error("Error changing password:", err);
-    return { error: err.message || "Failed to change password." };
+    return { error: sanitizeUserFacingError(err, "Unable to update password. Please try again later.") };
   }
 }
+
+export async function logoutAction() {
+  try {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: sanitizeUserFacingError(err, "Unable to sign out cleanly.") };
+  }
+}
+
 

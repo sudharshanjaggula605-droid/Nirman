@@ -1,6 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+/**
+ * Helper to ensure any cookies modified/refreshed by Supabase Auth are preserved
+ * on redirect responses across all mobile and desktop browsers.
+ */
+function createRedirectResponse(url: URL, baseResponse: NextResponse) {
+  const redirectResponse = NextResponse.redirect(url);
+  baseResponse.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+  });
+  return redirectResponse;
+}
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -42,7 +54,61 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Protected route identification
+  // 1. Root Landing Page (/) & Public Auth Pages (/login, /register)
+  // When a user has an active session, automatically redirect them to their respective dashboard
+  if (pathname === "/" || pathname === "/login" || pathname === "/register") {
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, status")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) {
+        const role = profile.role?.toLowerCase();
+        const status = profile.status?.toLowerCase();
+
+        // Account status redirections
+        if (status === "pending") {
+          const url = request.nextUrl.clone();
+          url.pathname = "/account-pending";
+          return createRedirectResponse(url, supabaseResponse);
+        }
+        if (status === "rejected") {
+          const url = request.nextUrl.clone();
+          url.pathname = "/account-rejected";
+          return createRedirectResponse(url, supabaseResponse);
+        }
+        if (status === "blocked") {
+          const url = request.nextUrl.clone();
+          url.pathname = "/account-blocked";
+          return createRedirectResponse(url, supabaseResponse);
+        }
+
+        // Approved active user - send straight to their respective dashboard
+        if (status === "approved") {
+          const url = request.nextUrl.clone();
+          if (role === "admin") {
+            url.pathname = "/admin/dashboard";
+            return createRedirectResponse(url, supabaseResponse);
+          }
+          if (role === "owner") {
+            url.pathname = "/owner/dashboard";
+            return createRedirectResponse(url, supabaseResponse);
+          }
+          if (role === "contractor") {
+            url.pathname = "/contractor/dashboard";
+            return createRedirectResponse(url, supabaseResponse);
+          }
+        }
+      }
+    }
+
+    // No active user or logged out -> show normal landing/login/register page
+    return supabaseResponse;
+  }
+
+  // 2. Protected route identification
   const isProtectedOwnerRoute = pathname.startsWith("/owner");
   const isProtectedContractorRoute = pathname.startsWith("/contractor");
   const isProtectedAdminRoute = pathname.startsWith("/admin");
@@ -52,11 +118,12 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // Unauthenticated access to protected route -> redirect to login
   if (!user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirectTo", pathname);
-    return NextResponse.redirect(url);
+    return createRedirectResponse(url, supabaseResponse);
   }
 
   // Query profile for status and role verification
@@ -70,31 +137,29 @@ export async function middleware(request: NextRequest) {
     console.log(`[MIDDLEWARE DEBUG] PATH: ${pathname} | USER: ${user.id} | NO PROFILE FOUND -> /complete-profile`);
     const url = request.nextUrl.clone();
     url.pathname = "/complete-profile";
-    return NextResponse.redirect(url);
+    return createRedirectResponse(url, supabaseResponse);
   }
 
   const role = profile.role?.toLowerCase();
   const status = profile.status?.toLowerCase();
 
-  console.log(`[MIDDLEWARE DEBUG] PATH: ${pathname} | USER: ${user.id} | ROLE: ${role} | STATUS: ${status}`);
-
   // Account status enforcement
   if (status === "pending" && !pathname.startsWith("/account-pending")) {
     const url = request.nextUrl.clone();
     url.pathname = "/account-pending";
-    return NextResponse.redirect(url);
+    return createRedirectResponse(url, supabaseResponse);
   }
 
   if (status === "rejected" && !pathname.startsWith("/account-rejected")) {
     const url = request.nextUrl.clone();
     url.pathname = "/account-rejected";
-    return NextResponse.redirect(url);
+    return createRedirectResponse(url, supabaseResponse);
   }
 
   if (status === "blocked" && !pathname.startsWith("/account-blocked")) {
     const url = request.nextUrl.clone();
     url.pathname = "/account-blocked";
-    return NextResponse.redirect(url);
+    return createRedirectResponse(url, supabaseResponse);
   }
 
   if (status !== "approved") {
@@ -107,21 +172,21 @@ export async function middleware(request: NextRequest) {
     console.log(`[MIDDLEWARE DENIAL] Non-admin user (${role}) attempted admin route: ${pathname}`);
     const url = request.nextUrl.clone();
     url.pathname = role === "owner" ? "/owner/dashboard" : role === "contractor" ? "/contractor/dashboard" : "/";
-    return NextResponse.redirect(url);
+    return createRedirectResponse(url, supabaseResponse);
   }
 
   if (isProtectedOwnerRoute && role !== "owner") {
     console.log(`[MIDDLEWARE DENIAL] Non-owner user (${role}) attempted owner route: ${pathname}`);
     const url = request.nextUrl.clone();
     url.pathname = role === "admin" ? "/admin/dashboard" : role === "contractor" ? "/contractor/dashboard" : "/";
-    return NextResponse.redirect(url);
+    return createRedirectResponse(url, supabaseResponse);
   }
 
   if (isProtectedContractorRoute && role !== "contractor") {
     console.log(`[MIDDLEWARE DENIAL] Non-contractor user (${role}) attempted contractor route: ${pathname}`);
     const url = request.nextUrl.clone();
     url.pathname = role === "admin" ? "/admin/dashboard" : role === "owner" ? "/owner/dashboard" : "/";
-    return NextResponse.redirect(url);
+    return createRedirectResponse(url, supabaseResponse);
   }
 
   return supabaseResponse;
@@ -129,6 +194,9 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
+    "/login",
+    "/register",
     "/owner/:path*",
     "/contractor/:path*",
     "/admin/:path*",

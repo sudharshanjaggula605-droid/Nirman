@@ -120,8 +120,8 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
         children
       ) : (
         <>
+          <Navbar />
           <div className="flex flex-col min-h-screen animate-nirman-page-in">
-            <Navbar />
             <main className="flex-1 pb-24 md:pb-0">{children}</main>
             <div className="hidden md:block"><Footer /></div>
           </div>

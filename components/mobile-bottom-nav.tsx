@@ -8,32 +8,26 @@ import {
   PlusCircle,
   Search,
   MoreHorizontal,
-  X,
   LayoutDashboard,
   LogOut,
-  Moon,
-  Sun,
   FileText,
   HelpCircle,
   Mail,
   ArrowRight,
 } from "lucide-react";
-import { NirmanLogo } from "@/components/nirman-logo";
-import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
+import { logoutAction } from "@/actions/auth";
+
 
 export function MobileBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
-    setMounted(true);
     async function loadUser() {
       try {
         const {
@@ -73,13 +67,16 @@ export function MobileBottomNav() {
   }, [moreOpen]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+      await logoutAction();
+    } catch {}
     setUser(null);
     setProfile(null);
     setMoreOpen(false);
-    router.push("/login");
-    router.refresh();
+    window.location.href = "/";
   };
+
 
   const getDashboardPath = () => {
     if (!profile) return "/login";
@@ -133,38 +130,8 @@ export function MobileBottomNav() {
               : "translate-y-8 opacity-0 scale-95"
           }`}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between border-b pb-3">
-            <div className="flex items-center gap-2 font-bold text-base">
-              <NirmanLogo size="sm" />
-              <span className="text-foreground font-black tracking-tight">NIRMAN Menu</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              {mounted && (
-                <button
-                  type="button"
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                  className="p-2 rounded-xl border bg-muted/40 text-foreground hover:bg-muted transition-colors cursor-pointer"
-                  aria-label="Toggle theme"
-                >
-                  {theme === "dark" ? (
-                    <Sun className="h-4 w-4 text-amber-400" />
-                  ) : (
-                    <Moon className="h-4 w-4" />
-                  )}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setMoreOpen(false)}
-                className="p-2 rounded-xl border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-                aria-label="Close menu"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+          {/* Top handle indicator */}
+          <div className="w-12 h-1 bg-muted-foreground/25 rounded-full mx-auto -mt-1 mb-1" />
 
           {/* User Profile Banner (if logged in) */}
           {user && profile && (

@@ -1,14 +1,20 @@
-# NIRMAN - Construction Tender Marketplace & Contractor Management Platform
+# NIRMAN v2.1.0 — Construction Tender Marketplace & Contractor Management Platform
 
 NIRMAN is a commercial-grade construction tender marketplace connecting **Property Owners**, licensed **Contractors**, and **Administrators**.
+
+> **✨ What's New in v2.1.0:**
+> - **NIRMAN Saathi (निर्माँ साथी)**: Voice-first and visual interactive assistant built specifically for non-technical or uneducated users with speech recognition, text-to-speech audio read-aloud, and one-tap action chips.
+> - **Interactive Application Tour**: A 5-step interactive walkthrough guiding users through live tenders, easy BOQ bidding, milestone escrow security, and platform features with audio voice guides.
 
 ---
 
 ## 🚀 Tech Stack
 
-- **Frontend & Backend**: Next.js 14/15 (App Router, TypeScript, React 18/19)
+- **Frontend & Backend**: Next.js 14 (App Router, TypeScript, React 18)
 - **Styling & UI**: Tailwind CSS, shadcn/ui primitives, Framer Motion, Lucide Icons, Recharts
+- **Accessibility & AI**: Web Speech Recognition (Voice Input), Web SpeechSynthesis (Voice Output), Interactive Guided Tour
 - **Database & Services**: Supabase (PostgreSQL, Auth, Storage, Realtime, Row Level Security)
+- **Payments & Escrow**: Razorpay Gateway (HMAC-SHA256 Webhook Verification, Milestone Payouts)
 - **Form Validation**: Zod, React Hook Form
 
 ---

@@ -8,11 +8,13 @@ import {
   LayoutDashboard,
   Moon,
   Sun,
+  Sparkles,
 } from "lucide-react";
 import { NirmanLogo } from "@/components/nirman-logo";
 import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
 import { logoutAction } from "@/actions/auth";
+import { startAppTour } from "@/components/interactive-tour";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -120,6 +122,9 @@ export function Navbar() {
           <span className="text-xs font-semibold uppercase px-2 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 hidden sm:inline-flex">
             Tenders
           </span>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/80 hidden lg:inline-flex">
+            v2.1.0
+          </span>
         </Link>
 
         {/* Desktop Nav Links */}
@@ -158,6 +163,16 @@ export function Navbar() {
 
         {/* Desktop Auth Actions & Theme Toggle */}
         <div className="hidden md:flex items-center gap-3">
+          {/* Quick Tour Button */}
+          <button
+            onClick={() => startAppTour()}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30 transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+            title="Take an Interactive Guided Tour of NIRMAN"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>App Tour</span>
+          </button>
+
           {mounted && (
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -202,8 +217,18 @@ export function Navbar() {
           )}
         </div>
 
-        {/* Mobile Header Actions (Theme Toggle Only - Navigation is handled by Fixed Bottom Bar) */}
+        {/* Mobile Header Actions */}
         <div className="flex md:hidden items-center gap-2">
+          {/* Mobile Tour Trigger */}
+          <button
+            onClick={() => startAppTour()}
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-full bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/30 cursor-pointer"
+            title="Tour"
+          >
+            <Sparkles className="h-3 w-3" />
+            <span>Tour</span>
+          </button>
+
           {mounted && (
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}

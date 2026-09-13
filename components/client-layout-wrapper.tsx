@@ -7,6 +7,8 @@ import { Footer } from "@/components/footer";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { SplashScreen } from "@/components/splash-screen";
 import { LanguageProvider } from "@/lib/i18n/language-context";
+import { NirmanAssistant } from "@/components/nirman-assistant";
+import { InteractiveTour } from "@/components/interactive-tour";
 
 export function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -128,6 +130,8 @@ export function ClientLayoutWrapper({ children }: { children: React.ReactNode })
           <MobileBottomNav />
         </>
       )}
+      <NirmanAssistant />
+      <InteractiveTour />
     </LanguageProvider>
   );
 }

@@ -122,9 +122,6 @@ export function Navbar() {
           <span className="text-xs font-semibold uppercase px-2 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 hidden sm:inline-flex">
             Tenders
           </span>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/80 hidden lg:inline-flex">
-            v2.1.0
-          </span>
         </Link>
 
         {/* Desktop Nav Links */}

@@ -14,6 +14,7 @@ import {
   HelpCircle,
   Mail,
   ArrowRight,
+  Bot,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { logoutAction } from "@/actions/auth";
@@ -161,7 +162,32 @@ export function MobileBottomNav() {
           )}
 
           {/* Navigation Links */}
-          <div className="space-y-1 text-sm font-medium">
+          <div className="space-y-1.5 text-sm font-medium">
+            {/* Featured Saathi Assistant Quick Action */}
+            <button
+              type="button"
+              onClick={() => {
+                setMoreOpen(false);
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new CustomEvent("nirman_open_assistant"));
+                }
+              }}
+              className="w-full flex items-center justify-between py-2.5 px-3 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/25 transition-all text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-orange-500/20 text-orange-600 dark:text-orange-400">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold leading-tight">NIRMAN Saathi (Voice AI)</div>
+                  <div className="text-[10.5px] text-muted-foreground font-normal">Voice and guided chat assistant</div>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-600 dark:text-orange-400">
+                Open
+              </span>
+            </button>
+
             <Link
               href="/"
               onClick={() => setMoreOpen(false)}

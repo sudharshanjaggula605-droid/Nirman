@@ -20,9 +20,9 @@ import {
 
 export interface TourStep {
   title: string;
-  hindiTitle: string;
+  hindiTitle?: string;
   description: string;
-  hindiDescription: string;
+  hindiDescription?: string;
   icon: any;
   iconBg: string;
   actionUrl?: string;
@@ -32,10 +32,8 @@ export interface TourStep {
 
 const TOUR_STEPS: TourStep[] = [
   {
-    title: "Welcome to NIRMAN v2.1.0",
-    hindiTitle: "निर्माँ में आपका स्वागत है",
+    title: "Welcome to NIRMAN",
     description: "NIRMAN is India's transparent construction tender platform. Property Owners post building projects, and licensed Contractors place direct bids with zero middlemen.",
-    hindiDescription: "निर्माँ पर प्रॉपर्टी मालिक अपने कंस्ट्रक्शन प्रोजेक्ट पोस्ट करते हैं और लाइसेंस प्राप्त ठेकेदार सीधे बोली लगाते हैं। कोई बिचौलिया नहीं!",
     icon: Building2,
     iconBg: "from-orange-500 to-amber-600",
     actionUrl: "/tenders",
@@ -44,9 +42,7 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     title: "Explore Live Tenders",
-    hindiTitle: "लाइव टेंडर्स देखें",
     description: "Browse commercial and residential construction projects across India. Filter by category, location, and budget range to find matching jobs.",
-    hindiDescription: "पूरे भारत के प्रोजेक्ट देखें। अपने शहर और बजट के अनुसार काम खोजें और तुरंत विवरण प्राप्त करें।",
     icon: FileText,
     iconBg: "from-blue-500 to-indigo-600",
     actionUrl: "/tenders",
@@ -55,9 +51,7 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     title: "Simple Bidding & Itemized BOQ",
-    hindiTitle: "आसान बोली (Bidding) प्रणाली",
     description: "Contractors submit quotes with transparent item-by-item cost breakdowns (BOQ). Property owners compare all bids side-by-side to choose the best contractor.",
-    hindiDescription: "ठेकेदार बिना किसी झंझट के आसान फॉर्म भरकर अपनी दरें दे सकते हैं। मालिक सभी बोलियों की तुलना करके सही ठेकेदार चुनते हैं।",
     icon: IndianRupee,
     iconBg: "from-emerald-500 to-teal-600",
     actionUrl: "/register",
@@ -66,9 +60,7 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     title: "Safe Milestone Escrow Payments",
-    hindiTitle: "सुरक्षित माइलस्टोन भुगतान",
     description: "Money is kept completely safe in escrow. Funds are only released to the contractor in stages after the property owner inspects and approves the completed work.",
-    hindiDescription: "आपका पैसा पूरी तरह सुरक्षित रहता है। जब तक काम पूरा नहीं होता और मालिक संतुष्ट नहीं होता, तब तक भुगतान नहीं कटता।",
     icon: ShieldCheck,
     iconBg: "from-purple-500 to-pink-600",
     actionUrl: "/contact",
@@ -76,10 +68,8 @@ const TOUR_STEPS: TourStep[] = [
     highlightNote: "100% Guaranteed milestone protection."
   },
   {
-    title: "Meet NIRMAN Saathi (Voice Assistant)",
-    hindiTitle: "निर्माँ साथी — आपकी आवाज़ में मदद",
+    title: "Meet NIRMAN Saathi (Guided Assistant)",
     description: "Have a question? Don't worry about typing! Click the orange assistant button at the bottom-right. You can speak into your mic or tap quick questions anytime.",
-    hindiDescription: "लिखने की ज़रूरत नहीं! नीचे दाईं ओर माइक बटन दबाएं और बोलकर अपना सवाल पूछें। निर्माँ साथी आपकी पूरी मदद करेगा।",
     icon: Bot,
     iconBg: "from-orange-600 to-rose-600",
     actionUrl: "#",
@@ -132,14 +122,14 @@ export function InteractiveTour() {
 
     stopSpeaking();
     const step = TOUR_STEPS[currentStep];
-    const textToSpeak = `${step.title}. ${step.description}. ${step.hindiDescription}`;
+    const textToSpeak = `${step.title}. ${step.description}`;
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.rate = 0.95;
     utterance.pitch = 1.0;
 
-    // Try to pick an English/Indian voice if available
+    // Try to pick an English voice if available
     const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => v.lang.includes("en-IN") || v.lang.includes("hi-IN") || v.lang.includes("en-US"));
+    const preferredVoice = voices.find(v => v.lang.includes("en-US") || v.lang.includes("en-IN") || v.lang.includes("en-GB"));
     if (preferredVoice) {
       utterance.voice = preferredVoice;
     }
@@ -200,10 +190,10 @@ export function InteractiveTour() {
                   ? "bg-orange-500 text-white border-orange-600 ring-2 ring-orange-500/30 animate-pulse" 
                   : "bg-muted hover:bg-accent text-foreground border-border"
               }`}
-              title="Listen aloud (बोलकर सुनें)"
+              title="Listen aloud"
             >
               {isSpeaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4 text-orange-500" />}
-              <span className="hidden sm:inline font-semibold">{isSpeaking ? "Stop" : "Listen / सुनें"}</span>
+              <span className="hidden sm:inline font-semibold">{isSpeaking ? "Stop" : "Listen"}</span>
             </button>
 
             {/* Close Button */}
@@ -235,20 +225,13 @@ export function InteractiveTour() {
               <h2 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">
                 {step.title}
               </h2>
-              <p className="text-sm font-semibold text-orange-600 dark:text-orange-400 mt-0.5">
-                {step.hindiTitle}
-              </p>
             </div>
           </div>
 
-          {/* Simple English Explanation */}
+          {/* Explanation */}
           <div className="rounded-2xl bg-muted/40 p-4 border border-border/50 space-y-2">
             <p className="text-sm sm:text-base leading-relaxed text-foreground font-medium">
               {step.description}
-            </p>
-            {/* Hindi / Regional Helper text for easier comprehension */}
-            <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground border-t border-border/40 pt-2 font-normal">
-              💡 <span className="font-semibold text-foreground/90">सरल भाषा में:</span> {step.hindiDescription}
             </p>
           </div>
 
@@ -273,6 +256,20 @@ export function InteractiveTour() {
               <span>{step.actionText}</span>
               <ExternalLink className="h-3.5 w-3.5" />
             </Link>
+          ) : step.actionText === "Open Nirman Saathi Now" ? (
+            <button
+              type="button"
+              onClick={() => {
+                handleClose();
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new CustomEvent("nirman_open_assistant"));
+                }
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-orange-600 dark:text-orange-400 hover:underline cursor-pointer"
+            >
+              <span>{step.actionText}</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
           ) : (
             <span className="text-xs text-muted-foreground">NIRMAN Platform Tour</span>
           )}

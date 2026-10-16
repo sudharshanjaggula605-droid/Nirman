@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { createClient } from "@/backend/lib/supabase/server";
 import { createAdminClient } from "@/backend/lib/supabase/admin";
@@ -53,8 +53,8 @@ export async function editTenderAction(formData: FormData) {
     .update({
       title: title.trim(),
       description: description?.trim() || "",
-      budget_min: budget_min > 0 ? budget_min : tender.budget_min,
-      budget_max: budget_max > 0 ? budget_max : tender.budget_max,
+      budget_min: budget_min > 0 ? Math.round(budget_min) : (tender.budget_min != null ? Math.round(tender.budget_min) : tender.budget_min),
+      budget_max: budget_max > 0 ? Math.round(budget_max) : (tender.budget_max != null ? Math.round(tender.budget_max) : tender.budget_max),
       bid_deadline: bid_deadline ? new Date(bid_deadline).toISOString() : tender.bid_deadline,
       updated_at: new Date().toISOString(),
     })
@@ -162,9 +162,10 @@ export async function getOwnerTendersAction() {
 
   const { data, error } = await adminClient
     .from("tenders")
-    .select("*, project:projects(title, location, city), bids:bids(*)")
+    .select("*, project:projects(title, location, city), bids:bids(id, status)")
     .eq("owner_id", user.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   if (error) {
     return { error: error.message, tenders: [] };

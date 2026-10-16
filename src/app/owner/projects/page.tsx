@@ -1,14 +1,27 @@
-﻿"use client";
+"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Building2, PlusCircle, Eye, Filter } from "lucide-react";
 import { createClient } from "@/frontend/lib/supabase/client";
 
-export default function OwnerProjectsPage() {
+function OwnerProjectsContent() {
+  const searchParams = useSearchParams();
+  const initialStatusParam = searchParams.get("status");
+
   const [projects, setProjects] = useState<any[]>([]);
-  const [filter, setFilter] = useState<string>("ALL");
+  const [filter, setFilter] = useState<string>(
+    initialStatusParam ? initialStatusParam.toUpperCase() : "ALL"
+  );
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const statusParam = searchParams.get("status");
+    if (statusParam) {
+      setFilter(statusParam.toUpperCase());
+    }
+  }, [searchParams]);
 
   const supabase = createClient();
 
@@ -109,7 +122,7 @@ export default function OwnerProjectsPage() {
                   <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-muted/50">
                     <div>
                       <span className="text-[10px] text-muted-foreground block font-medium">Contractor</span>
-                      <span className="font-bold text-foreground">{project.contractor_name || "Assigned Contractor"}</span>
+                      <span className="font-bold text-foreground">{project.contractor_name?.trim() ? project.contractor_name : "Not Assigned"}</span>
                     </div>
                     <div>
                       <span className="text-[10px] text-muted-foreground block font-medium">Budget</span>
@@ -134,7 +147,7 @@ export default function OwnerProjectsPage() {
 
                 <div className="pt-4 border-t">
                   <Link
-                    href={`/owner/projects/${project.id}`}
+                    href={`/owner/projects/${project.id || project._id}`}
                     className="w-full inline-flex items-center justify-center gap-2 rounded-xl border bg-background px-4 py-2.5 text-xs font-bold text-foreground hover:bg-accent transition-colors"
                   >
                     <Eye className="h-4 w-4 text-orange-600" /> View Project
@@ -162,5 +175,13 @@ export default function OwnerProjectsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function OwnerProjectsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-muted-foreground">Loading projects...</div>}>
+      <OwnerProjectsContent />
+    </Suspense>
   );
 }

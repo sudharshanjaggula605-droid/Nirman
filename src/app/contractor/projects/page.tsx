@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
@@ -23,10 +23,11 @@ function ContractorProjectsContent() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Fetch projects for this contractor or awarded projects
+        // Fetch projects for this contractor - strictly exclude TENDER and DRAFT
         const { data } = await supabase
           .from("projects")
           .select("*, owner:owners(full_name)")
+          .in("status", ["active", "completed"])
           .order("created_at", { ascending: false });
 
         if (data) setProjects(data);
@@ -46,8 +47,11 @@ function ContractorProjectsContent() {
   }, [searchParams]);
 
   const filteredProjects = projects.filter((p) => {
-    if (filter === "ALL") return true;
-    return p.status?.toUpperCase() === filter;
+    const st = (p.status || "").toUpperCase();
+    // Bug 4 fix: Exclude TENDER and DRAFT status completely from Active projects
+    if (st === "TENDER" || st === "DRAFT") return false;
+    if (filter === "ALL") return st === "ACTIVE" || st === "COMPLETED";
+    return st === filter;
   });
 
   return (
@@ -85,7 +89,7 @@ function ContractorProjectsContent() {
                   : "bg-card border text-muted-foreground hover:text-foreground"
               }`}
             >
-              {st === "ALL" ? `All (${projects.length})` : st === "ACTIVE" ? "Active" : "Completed"}
+              {st === "ALL" ? `All (${filteredProjects.length})` : st === "ACTIVE" ? "Active" : "Completed"}
             </button>
           ))}
         </div>
@@ -96,7 +100,13 @@ function ContractorProjectsContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project) => {
             const statusUpper = (project.status || "ACTIVE").toUpperCase();
-            const progressVal = project.progress_percentage ?? (statusUpper === "COMPLETED" ? 100 : 65);
+            // Bug 5 fix: Calculate progress dynamically from milestones, removing hardcoded 65% default
+            const totalMilestones = project.milestones?.length || 0;
+            const completedMilestones = (project.milestones || []).filter((m: any) => m.status === "completed").length;
+            const calculatedProgress = totalMilestones > 0
+              ? Math.round((completedMilestones / totalMilestones) * 100)
+              : (project.progress_percentage ?? (statusUpper === "COMPLETED" ? 100 : 0));
+            const progressVal = statusUpper === "COMPLETED" ? 100 : calculatedProgress;
 
             return (
               <div
@@ -154,7 +164,7 @@ function ContractorProjectsContent() {
 
                 <div className="pt-4 border-t">
                   <Link
-                    href="/contractor/projects/active"
+                    href={`/contractor/projects/${project.id || project._id}`}
                     className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-700 transition-all"
                   >
                     <Eye className="h-4 w-4" /> Manage Project & Milestones

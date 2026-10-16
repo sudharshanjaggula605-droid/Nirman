@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -25,6 +25,7 @@ export default function ContractorCompletedProjectsPage() {
           .from("projects")
           .select("*, owner:owners(full_name)")
           .eq("status", "completed")
+          .eq("contractor_id", user.id)
           .order("created_at", { ascending: false });
 
         if (data) setProjects(data);

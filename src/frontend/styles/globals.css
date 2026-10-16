@@ -1,0 +1,207 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 24.6 95% 53.1%;
+    --primary-foreground: 60 9.1% 97.8%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 24.6 95% 53.1%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 6.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 6.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 24.6 95% 53.1%;
+    --primary-foreground: 60 9.1% 97.8%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 24.6 95% 53.1%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+/* PhonePe-Style Smooth Scroll-Driven Card Zoom for Mobile */
+@supports (animation-timeline: view()) {
+  @media (max-width: 767px) {
+    .phonepe-tender-card {
+      animation: phonepeCardZoom linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 50% exit 100%;
+    }
+    .phonepe-support-card {
+      animation: phonepeSupportZoom linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 45% exit 100%;
+    }
+  }
+}
+
+@keyframes phonepeCardZoom {
+  0% {
+    transform: scale(0.94);
+    opacity: 0.88;
+  }
+  30%, 75% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+}
+
+@keyframes phonepeSupportZoom {
+  0% {
+    transform: scale(0.96);
+    opacity: 0.92;
+  }
+  25%, 75% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.96);
+    opacity: 0.92;
+  }
+}
+
+/* NIRMAN Splash Logo Animation */
+@keyframes nirmanLogoPop {
+  0% {
+    transform: scale(0.8) translateY(10px);
+    opacity: 0;
+    filter: blur(4px);
+  }
+  50% {
+    transform: scale(1.06) translateY(-2px);
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+@keyframes nirmanHatTilt {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(-6deg);
+  }
+  70% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes nirmanTextReveal {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  40% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes nirmanProgressBar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes nirmanPageFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-nirman-logo {
+  animation: nirmanLogoPop 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-nirman-hat {
+  animation: nirmanHatTilt 1.2s ease-in-out infinite;
+}
+
+.animate-nirman-text {
+  animation: nirmanTextReveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-nirman-progress {
+  animation: nirmanProgressBar 1.4s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.animate-nirman-page-in {
+  animation: nirmanPageFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { createClient } from "@/backend/lib/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -80,8 +80,8 @@ export async function createProjectAndPublishTender(formData: FormData) {
       owner_id: user.id,
       title: `Tender for ${title}`,
       description,
-      budget_min: estimated_budget * 0.9,
-      budget_max: estimated_budget * 1.1,
+      budget_min: Math.round(estimated_budget * 0.9),
+      budget_max: Math.round(estimated_budget * 1.1),
       bid_deadline: new Date(bid_deadline).toISOString(),
       status: isPublishing ? "active" : "draft",
       published_at: isPublishing ? new Date().toISOString() : null,

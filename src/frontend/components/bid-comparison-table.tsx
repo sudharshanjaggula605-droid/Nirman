@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { CheckCircle2, Star, Clock, Briefcase, Award, ShieldCheck, DollarSign, HardHat } from "lucide-react";
 import { formatCurrency } from "@/frontend/lib/utils";

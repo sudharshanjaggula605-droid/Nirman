@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -96,7 +96,10 @@ export default function OwnerDashboardPage() {
   const pendingBids = (bids || []).filter((b) => b?.status === "pending").length;
   const completedProjects = (projects || []).filter((p) => p?.status === "completed").length;
 
-  const firstActiveProject = (projects || []).find((p) => p?.status === "active") || projects?.[0];
+  // Only show active projects in the progress section (Bug 6 fix: do not fallback to draft projects)
+  const firstActiveProject = (projects || []).find(
+    (p) => (p?.status || "").toLowerCase() === "active"
+  );
 
   const greetingDisplay = mounted
     ? getTimeBasedGreeting(profile?.first_name || profile?.full_name, "Property Owner")
@@ -224,7 +227,7 @@ export default function OwnerDashboardPage() {
             <ChevronRight className="h-4 w-4" />
           </Link>
           <Link
-            href="/owner/projects"
+            href="/owner/projects?status=active"
             className="flex items-center justify-between rounded-xl border bg-muted/40 p-3.5 text-xs font-bold text-foreground hover:bg-accent transition-colors"
           >
             <span>View Active Projects</span>
@@ -241,7 +244,7 @@ export default function OwnerDashboardPage() {
               <h2 className="text-base font-extrabold text-foreground">Active Project Progress</h2>
               <p className="text-xs text-muted-foreground">Real-time completion milestone tracking</p>
             </div>
-            <Link href="/owner/projects" className="text-xs font-bold text-orange-600 hover:underline">
+            <Link href="/owner/projects?status=active" className="text-xs font-bold text-orange-600 hover:underline">
               View All Projects →
             </Link>
           </div>
@@ -265,12 +268,12 @@ export default function OwnerDashboardPage() {
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs font-bold">
                 <span className="text-muted-foreground">Overall Construction Progress</span>
-                <span className="text-orange-600">{firstActiveProject.progress_percentage || 45}%</span>
+                <span className="text-orange-600">{firstActiveProject.progress_percentage ?? 0}%</span>
               </div>
               <div className="h-3 w-full rounded-full bg-muted overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-orange-600 to-amber-500 rounded-full transition-all duration-500"
-                  style={{ width: `${firstActiveProject.progress_percentage || 45}%` }}
+                  style={{ width: `${firstActiveProject.progress_percentage ?? 0}%` }}
                 />
               </div>
             </div>

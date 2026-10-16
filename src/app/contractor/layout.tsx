@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { ContractorSidebar } from "@/frontend/components/dashboard/contractor-sidebar";
@@ -10,9 +10,9 @@ export default function ContractorLayout({ children }: { children: React.ReactNo
   return (
     <div className="flex h-screen max-h-screen w-full overflow-hidden bg-background text-foreground">
       <ContractorSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex flex-1 flex-col h-screen min-w-0 overflow-hidden">
+      <div className="flex flex-1 flex-col h-screen min-h-0 min-w-0 overflow-hidden">
         <DashboardHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} title="Contractor Portal" />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 scroll-smooth">
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 scroll-smooth">
           {children}
         </main>
       </div>

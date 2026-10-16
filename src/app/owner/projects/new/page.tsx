@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -11,7 +11,8 @@ export default function CreateProjectPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   // Form State
   const [title, setTitle] = useState("");
@@ -34,6 +35,21 @@ export default function CreateProjectPage() {
   const [attachments, setAttachments] = useState<Array<{ id: string; name: string; size: number; type: string; file?: File }>>([]);
   const [isDragging, setIsDragging] = useState(false);
 
+  const handleNextStep = () => {
+    setError(null);
+    if (step === 1) {
+      if (!title.trim()) {
+        setError("Please enter a project title");
+        return;
+      }
+      if (!description.trim()) {
+        setError("Please enter a project description");
+        return;
+      }
+    }
+    setStep((prev) => Math.min(prev + 1, 5));
+  };
+
   const handleFilesSelect = (selectedFiles: File[]) => {
     const newItems = selectedFiles.map((file) => ({
       id: Math.random().toString(36).substring(2, 9),
@@ -51,41 +67,52 @@ export default function CreateProjectPage() {
 
   const handleAction = async (actionType: "draft" | "publish") => {
     setError(null);
-    setLoading(true);
-
-    const formData = new FormData();
-    formData.set("title", title);
-    formData.set("description", description);
-    formData.set("category_name", categoryName);
-    formData.set("property_type", propertyType);
-    formData.set("area_sqft", areaSqft);
-    formData.set("estimated_budget", estimatedBudget);
-    formData.set("location", address);
-    formData.set("city", city);
-    formData.set("state", state);
-    formData.set("pincode", pincode);
-    formData.set("start_date", startDate);
-    formData.set("expected_completion_date", completionDate);
-    formData.set("bid_deadline", bidDeadline);
-    formData.set("actionType", actionType);
-
-    if (attachments.length > 0) {
-      const serialized = attachments.map((att) => ({
-        name: att.name,
-        size: att.size,
-        type: att.type,
-        url: "#",
-      }));
-      formData.set("attachments", JSON.stringify(serialized));
+    if (actionType === "draft") {
+      setIsSavingDraft(true);
+    } else {
+      setIsPublishing(true);
     }
 
-    const result = await createProjectAndPublishTender(formData);
+    try {
+      const formData = new FormData();
+      formData.set("title", title);
+      formData.set("description", description);
+      formData.set("category_name", categoryName);
+      formData.set("property_type", propertyType);
+      formData.set("area_sqft", areaSqft);
+      formData.set("estimated_budget", estimatedBudget);
+      formData.set("location", address);
+      formData.set("city", city);
+      formData.set("state", state);
+      formData.set("pincode", pincode);
+      formData.set("start_date", startDate);
+      formData.set("expected_completion_date", completionDate);
+      formData.set("bid_deadline", bidDeadline);
+      formData.set("actionType", actionType);
 
-    if (result?.error) {
-      setError(result.error);
-      setLoading(false);
-    } else {
-      router.push(actionType === "publish" ? "/" : "/owner/dashboard");
+      if (attachments.length > 0) {
+        const serialized = attachments.map((att) => ({
+          name: att.name,
+          size: att.size,
+          type: att.type,
+          url: "#",
+        }));
+        formData.set("attachments", JSON.stringify(serialized));
+      }
+
+      const result = await createProjectAndPublishTender(formData);
+
+      if (result?.error) {
+        setError(result.error);
+        setIsSavingDraft(false);
+        setIsPublishing(false);
+      } else {
+        router.push(actionType === "publish" ? "/" : "/owner/dashboard");
+      }
+    } catch (err: any) {
+      setError(err?.message || "An unexpected error occurred.");
+      setIsSavingDraft(false);
+      setIsPublishing(false);
     }
   };
 
@@ -407,7 +434,7 @@ export default function CreateProjectPage() {
 
             <div className="rounded-xl bg-muted/40 p-4 border space-y-2 text-xs">
               <div className="flex justify-between"><span className="text-muted-foreground">Title:</span> <strong className="text-foreground">{title || "Modern Duplex Villa"}</strong></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Location:</span> <strong className="text-foreground">{city}, {state}</strong></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Location:</span> <strong className="text-foreground">{[address, city, state].filter(Boolean).join(", ") || `${city}, ${state}`}</strong></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Area & Budget:</span> <strong className="text-orange-600">{areaSqft} Sq.ft | ₹{parseFloat(estimatedBudget || "0").toLocaleString()}</strong></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Bid Deadline:</span> <strong className="text-foreground">{bidDeadline}</strong></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Attached Files:</span> <strong className="text-foreground">{attachments.length} Document(s)</strong></div>
@@ -416,20 +443,20 @@ export default function CreateProjectPage() {
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 type="button"
-                disabled={loading}
+                disabled={isSavingDraft || isPublishing}
                 onClick={() => handleAction("draft")}
                 className="flex-1 rounded-xl border bg-card px-4 py-3 text-xs font-bold text-foreground hover:bg-accent disabled:opacity-50"
               >
-                Save Draft
+                {isSavingDraft ? "Saving..." : "Save Draft"}
               </button>
 
               <button
                 type="button"
-                disabled={loading}
+                disabled={isSavingDraft || isPublishing}
                 onClick={() => handleAction("publish")}
                 className="flex-1 rounded-xl bg-orange-600 px-4 py-3 text-xs font-bold text-white shadow-lg shadow-orange-600/30 hover:bg-orange-700 disabled:opacity-50"
               >
-                {loading ? "Publishing..." : "Publish Tender (Make Live)"}
+                {isPublishing ? "Publishing..." : "Publish Tender (Make Live)"}
               </button>
             </div>
           </div>
@@ -450,7 +477,7 @@ export default function CreateProjectPage() {
           {step < 5 && (
             <button
               type="button"
-              onClick={() => setStep(step + 1)}
+              onClick={handleNextStep}
               className="inline-flex items-center gap-1 rounded-lg bg-orange-600 px-4 py-2 text-xs font-bold text-white shadow-md hover:bg-orange-700"
             >
               Next Step <ArrowRight className="h-4 w-4" />

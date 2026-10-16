@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -56,8 +56,8 @@ export default function OwnerTendersPage() {
     setEditingTender(t);
     setEditTitle(t.title || "");
     setEditDesc(t.description || "");
-    setEditMinBudget(t.budget_min?.toString() || "");
-    setEditMaxBudget(t.budget_max?.toString() || "");
+    setEditMinBudget(t.budget_min != null ? Math.round(Number(t.budget_min)).toString() : "");
+    setEditMaxBudget(t.budget_max != null ? Math.round(Number(t.budget_max)).toString() : "");
     setEditDeadline(t.bid_deadline ? new Date(t.bid_deadline).toISOString().split("T")[0] : "");
     setEditError(null);
   };
@@ -134,7 +134,22 @@ export default function OwnerTendersPage() {
       {/* Tenders Table */}
       <div className="rounded-2xl border bg-card p-6 space-y-4 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="py-16 text-center text-xs text-muted-foreground">Loading your tenders...</div>
+          <div className="space-y-3 py-3 animate-pulse">
+            <div className="h-10 bg-muted/40 rounded-xl w-full" />
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center justify-between p-3.5 border-b border-muted/30 gap-4">
+                <div className="space-y-1.5 flex-1">
+                  <div className="h-4 bg-muted/60 rounded w-1/3" />
+                  <div className="h-3 bg-muted/40 rounded w-1/4" />
+                </div>
+                <div className="h-4 bg-muted/50 rounded w-24" />
+                <div className="h-4 bg-muted/50 rounded w-16" />
+                <div className="h-4 bg-muted/50 rounded w-20" />
+                <div className="h-6 bg-muted/50 rounded-full w-16" />
+                <div className="h-8 bg-muted/50 rounded-xl w-24" />
+              </div>
+            ))}
+          </div>
         ) : tenders.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">

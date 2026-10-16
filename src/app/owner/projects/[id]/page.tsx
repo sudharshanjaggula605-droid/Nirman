@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Building2,
@@ -16,39 +16,66 @@ import {
   Upload,
   HardHat,
   Star,
+  Loader2,
 } from "lucide-react";
+import { createClient } from "@/frontend/lib/supabase/client";
 
 export default function OwnerProjectDetailPage({ params }: { params: { id: string } }) {
   const [activeTab, setActiveTab] = useState<
     "overview" | "progress" | "milestones" | "site_updates" | "documents" | "payments" | "messages"
   >("overview");
+  const [projectData, setProjectData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Sample active project state for owner view
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadProject() {
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("*, tender:tenders(*)")
+          .eq("id", params.id)
+          .maybeSingle();
+
+        if (data) {
+          setProjectData(data);
+        }
+      } catch (err) {
+        console.error("Error loading project details:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProject();
+  }, [params.id]);
+
+  // Dynamic project state mapping to live Supabase entity with fallbacks
   const project = {
     id: params.id,
-    title: "3BHK Independent Villa Construction",
-    description: "2,400 sq.ft duplex villa construction with premium elevations and smart wiring.",
-    location: "Plot 42, Jubilee Hills, Hyderabad",
+    title: projectData?.title || (loading ? "Loading Project..." : "3BHK Independent Villa Construction"),
+    description: projectData?.description || "No detailed description provided.",
+    location: [projectData?.location, projectData?.city, projectData?.state].filter(Boolean).join(", ") || "Hyderabad, Telangana",
     contractor: {
-      company_name: "ABC Constructions",
-      contact_person: "Anand Sharma",
-      phone: "+91 9876543210",
+      company_name: projectData?.contractor_name || "Not Assigned",
+      contact_person: projectData?.contractor_name ? "Project Lead" : "Not Assigned",
+      phone: projectData?.contractor_phone || "Not Available",
       rating: 4.8,
     },
-    budget: 3500000,
-    start_date: "2026-03-01",
-    expected_completion: "2027-03-31",
-    progress: 72,
-    current_stage: "Brick Work & Slab Framing",
-    status: "active",
+    budget: projectData?.estimated_budget || 3500000,
+    start_date: projectData?.start_date || "Not Started",
+    expected_completion: projectData?.expected_completion_date || "TBD",
+    progress: projectData?.progress_percentage ?? (projectData?.status === "completed" ? 100 : projectData?.status === "active" ? 50 : 0),
+    current_stage: projectData?.current_stage || (projectData?.status === "draft" ? "Draft Stage" : "Initial Groundwork"),
+    status: (projectData?.status || "active").toLowerCase(),
   };
 
   const milestones = [
-    { title: "Foundation & Excavation", progress: 100, status: "completed", date: "2026-04-15" },
-    { title: "RCC Pillar Framing & Slabs", progress: 100, status: "completed", date: "2026-06-30" },
-    { title: "Brick Work & Plastering", progress: 60, status: "in_progress", date: "2026-09-15" },
-    { title: "Electrical & Plumbing Piping", progress: 0, status: "pending", date: "2026-11-30" },
-    { title: "Flooring & Interior Finishing", progress: 0, status: "pending", date: "2027-02-15" },
+    { title: "Foundation & Excavation", progress: project.progress >= 20 ? 100 : 0, status: project.progress >= 20 ? "completed" : "pending", date: "2026-04-15" },
+    { title: "RCC Pillar Framing & Slabs", progress: project.progress >= 40 ? 100 : 0, status: project.progress >= 40 ? "completed" : "pending", date: "2026-06-30" },
+    { title: "Brick Work & Plastering", progress: project.progress >= 60 ? (project.progress >= 80 ? 100 : 60) : 0, status: project.progress >= 60 ? (project.progress >= 80 ? "completed" : "in_progress") : "pending", date: "2026-09-15" },
+    { title: "Electrical & Plumbing Piping", progress: project.progress >= 85 ? 100 : 0, status: project.progress >= 85 ? "completed" : "pending", date: "2026-11-30" },
+    { title: "Flooring & Interior Finishing", progress: project.progress === 100 ? 100 : 0, status: project.progress === 100 ? "completed" : "pending", date: "2027-02-15" },
   ];
 
   return (
@@ -63,8 +90,14 @@ export default function OwnerProjectDetailPage({ params }: { params: { id: strin
           <p className="text-xs text-muted-foreground">{project.location}</p>
         </div>
 
-        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3.5 py-1.5 text-xs font-extrabold text-emerald-600 border border-emerald-500/20">
-          <CheckCircle2 className="h-4 w-4" /> Active Construction
+        <div className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-extrabold border ${
+          project.status === "active"
+            ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+            : project.status === "completed"
+            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+            : "bg-muted text-muted-foreground border-border"
+        }`}>
+          <CheckCircle2 className="h-4 w-4" /> {project.status.toUpperCase()}
         </div>
       </div>
 

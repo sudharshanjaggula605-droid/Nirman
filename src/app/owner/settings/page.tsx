@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { Key, Globe, Check, Save, AlertCircle, Loader2, Lock, Mail, User, Phone, ShieldCheck, Info } from "lucide-react";
@@ -169,7 +169,7 @@ export default function OwnerSettingsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl pb-12">
+    <div className="space-y-6 max-w-4xl pb-24 overflow-y-auto max-h-full">
       <div className="border-b pb-4">
         <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t("settings.title", "Account & Interface Settings")}</h1>
         <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">{t("settings.subtitle", "Manage language preference, password, and security settings")}</p>

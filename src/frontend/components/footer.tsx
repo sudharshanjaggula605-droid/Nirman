@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { ShieldCheck, Building2, FileText } from "lucide-react";
 import { NirmanLogo } from "@/frontend/components/nirman-logo";
 

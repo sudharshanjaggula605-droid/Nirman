@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -24,6 +24,7 @@ export default function ContractorDashboardPage() {
   const [contractor, setContractor] = useState<any>(null);
   const [tenders, setTenders] = useState<any[]>([]);
   const [myBids, setMyBids] = useState<any[]>([]);
+  const [completedProjects, setCompletedProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
@@ -68,6 +69,14 @@ export default function ContractorDashboardPage() {
           .eq("contractor_id", user.id)
           .order("submitted_at", { ascending: false });
         if (bids) setMyBids(bids);
+
+        // Fetch completed projects for this contractor (Bug 2 fix: matching criteria with completed projects page)
+        const { data: compProjects } = await supabase
+          .from("projects")
+          .select("id, status")
+          .eq("status", "completed")
+          .eq("contractor_id", user.id);
+        if (compProjects) setCompletedProjects(compProjects);
       } catch (err) {
         console.error("Error loading contractor dashboard:", err);
       } finally {
@@ -83,7 +92,7 @@ export default function ContractorDashboardPage() {
   const pendingBidsCount = (myBids || []).filter((b) => b?.status === "pending").length;
   const acceptedBidsCount = (myBids || []).filter((b) => b?.status === "accepted").length;
   const activeProjectsCount = (myBids || []).filter((b) => b?.status === "accepted").length;
-  const completedProjectsCount = contractor?.total_projects || 0;
+  const completedProjectsCount = completedProjects?.length || 0;
 
   const greetingDisplay = mounted
     ? getTimeBasedGreeting(profile?.first_name || contractor?.contact_person || profile?.full_name, "Contractor")

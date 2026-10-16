@@ -1,4 +1,4 @@
-﻿# NIRMAN — Project Structure Guide
+# NIRMAN — Project Structure Guide
 
 > **Version 2.1** | Next.js 14 + Supabase Full-Stack Application
 

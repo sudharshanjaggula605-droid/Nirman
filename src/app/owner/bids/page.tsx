@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -44,7 +44,8 @@ export default function ReceivedBidsPage() {
       const { data: tenders } = await supabase
         .from("tenders")
         .select("id, title")
-        .eq("owner_id", user.id);
+        .eq("owner_id", user.id)
+        .limit(50);
 
       if (tenders && tenders.length > 0) {
         const tenderIds = tenders.map((t) => t.id);
@@ -52,7 +53,8 @@ export default function ReceivedBidsPage() {
           .from("bids")
           .select("*, contractor:contractors(*), tender:tenders(title, status)")
           .in("tender_id", tenderIds)
-          .order("submitted_at", { ascending: false });
+          .order("submitted_at", { ascending: false })
+          .limit(50);
 
         if (bidsData) setBids(bidsData);
       }
@@ -154,7 +156,23 @@ export default function ReceivedBidsPage() {
       )}
 
       {loading ? (
-        <div className="py-16 text-center text-xs text-muted-foreground">Loading received bids...</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="rounded-2xl border bg-card p-6 space-y-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="h-4 bg-muted/60 rounded w-1/3" />
+                <div className="h-5 bg-muted/50 rounded-full w-20" />
+              </div>
+              <div className="h-5 bg-muted/60 rounded w-3/4" />
+              <div className="h-4 bg-muted/40 rounded w-1/2" />
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-muted/30">
+                <div className="h-8 bg-muted/40 rounded" />
+                <div className="h-8 bg-muted/40 rounded" />
+              </div>
+              <div className="h-9 bg-muted/50 rounded-xl w-full" />
+            </div>
+          ))}
+        </div>
       ) : bids.length === 0 ? (
         <div className="rounded-2xl border border-dashed p-12 text-center space-y-3 bg-muted/20">
           <Users className="h-10 w-10 text-muted-foreground mx-auto" />

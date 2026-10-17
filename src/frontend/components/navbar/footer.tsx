@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { ShieldCheck, Building2, FileText } from "lucide-react";
 import { NirmanLogo } from "@/frontend/components/nirman-logo";
 
@@ -40,7 +40,7 @@ export function Footer() {
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Platform</h3>
             <ul className="space-y-2 text-xs text-muted-foreground font-medium">
-              <li><Link href="/" className="hover:text-orange-600 transition-colors">Live Tenders</Link></li>
+              <li><Link href="/#live-tenders" className="hover:text-orange-600 transition-colors">Live Tenders</Link></li>
               <li><Link href="/register?role=owner" className="hover:text-orange-600 transition-colors">Post Construction Tender</Link></li>
               <li><Link href="/register?role=contractor" className="hover:text-orange-600 transition-colors">Contractor Registration</Link></li>
               <li><Link href="/login" className="hover:text-orange-600 transition-colors">User Dashboard Login</Link></li>

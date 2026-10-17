@@ -54,7 +54,7 @@ export default function ContractorCompletedProjectsPage() {
         </div>
 
         <div className="hidden sm:block text-xs text-muted-foreground font-semibold shrink-0">
-          Showing <span className="font-extrabold text-foreground">{projects.length}</span> completed projects
+          Showing <span className="font-extrabold text-foreground">{projects.length}</span> completed {projects.length === 1 ? "project" : "projects"}
         </div>
       </div>
 

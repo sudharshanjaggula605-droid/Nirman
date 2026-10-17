@@ -10,9 +10,9 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex h-screen max-h-screen w-full overflow-hidden bg-background text-foreground">
       <OwnerSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex flex-1 flex-col h-screen min-h-0 min-w-0 overflow-hidden">
+      <div className="flex flex-1 flex-col h-full min-h-0 min-w-0 overflow-hidden">
         <DashboardHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} title="Property Owner Portal" />
-        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 scroll-smooth">
+        <main id="dashboard-main-scroll" className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 scroll-smooth">
           {children}
         </main>
       </div>

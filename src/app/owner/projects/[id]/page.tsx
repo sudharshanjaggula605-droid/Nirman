@@ -57,10 +57,10 @@ export default function OwnerProjectDetailPage({ params }: { params: { id: strin
     description: projectData?.description || "No detailed description provided.",
     location: [projectData?.location, projectData?.city, projectData?.state].filter(Boolean).join(", ") || "Hyderabad, Telangana",
     contractor: {
-      company_name: projectData?.contractor_name || "Not Assigned",
-      contact_person: projectData?.contractor_name ? "Project Lead" : "Not Assigned",
-      phone: projectData?.contractor_phone || "Not Available",
-      rating: 4.8,
+      company_name: projectData?.contractor_name?.trim() ? projectData.contractor_name : "Not Assigned",
+      contact_person: projectData?.contractor_name?.trim() ? "Project Lead" : "Not Assigned",
+      phone: projectData?.contractor_phone?.trim() ? projectData.contractor_phone : "Not Available",
+      rating: projectData?.contractor_name?.trim() ? 4.8 : null,
     },
     budget: projectData?.estimated_budget || 3500000,
     start_date: projectData?.start_date || "Not Started",
@@ -144,9 +144,15 @@ export default function OwnerProjectDetailPage({ params }: { params: { id: strin
             <div className="rounded-2xl border bg-card p-4 space-y-1 shadow-sm">
               <span className="text-xs text-muted-foreground font-semibold">Contractor Firm</span>
               <div className="text-base font-extrabold text-foreground">{project.contractor.company_name}</div>
-              <div className="text-xs text-amber-500 font-bold flex items-center gap-1">
-                <Star className="h-3.5 w-3.5 fill-amber-500" /> {project.contractor.rating} / 5.0 Rating
-              </div>
+              {project.contractor.rating ? (
+                <div className="text-xs text-amber-500 font-bold flex items-center gap-1">
+                  <Star className="h-3.5 w-3.5 fill-amber-500" /> {project.contractor.rating} / 5.0 Rating
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground font-medium">
+                  Awaiting Assignment
+                </div>
+              )}
             </div>
 
             <div className="rounded-2xl border bg-card p-4 space-y-1 shadow-sm">

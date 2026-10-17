@@ -116,7 +116,7 @@ export default function ContractorDashboardPage() {
   }
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-32" id="contractor-dashboard-container">
       {/* Greeting Banner */}
       <div className="rounded-3xl border bg-gradient-to-r from-orange-500/10 via-background to-amber-500/10 p-6 sm:p-8 relative overflow-hidden shadow-sm">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

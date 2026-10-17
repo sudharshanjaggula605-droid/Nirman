@@ -50,10 +50,52 @@ export function Navbar() {
 
   const isLanding = pathname === "/";
   const [isScrolled, setIsScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
 
   useEffect(() => {
     setIsScrolled(false);
   }, [pathname]);
+
+  // Scrollspy logic: only activate section links when user scrolls to them (prevents highlighting Live Tenders on top of page load)
+  useEffect(() => {
+    if (!isLanding) {
+      setActiveSection(null);
+      return;
+    }
+
+    const handleScrollSpy = () => {
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
+
+      // When at hero section / top of page, no section anchor is active
+      if (scrollY < 300) {
+        setActiveSection(null);
+        return;
+      }
+
+      const sections = ["live-tenders", "how-it-works", "contact"];
+      const offsetMargin = 220;
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const el = document.getElementById(sections[i]);
+        if (el) {
+          const top = el.getBoundingClientRect().top + scrollY;
+          if (scrollY >= top - offsetMargin) {
+            setActiveSection(sections[i]);
+            return;
+          }
+        }
+      }
+
+      setActiveSection(null);
+    };
+
+    window.addEventListener("scroll", handleScrollSpy, { passive: true });
+    handleScrollSpy();
+
+    return () => {
+      window.removeEventListener("scroll", handleScrollSpy);
+    };
+  }, [isLanding]);
 
   // Efficient passive scroll listener for navbar background transition on mobile
   useEffect(() => {
@@ -127,22 +169,32 @@ export function Navbar() {
         {/* Desktop Nav Links */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
           <Link
-            href="/"
+            href="/#live-tenders"
             className={`transition-colors hover:text-orange-600 ${
-              pathname === "/" ? "text-orange-600 font-semibold" : "text-muted-foreground"
+              activeSection === "live-tenders" || (!isLanding && pathname === "/tenders")
+                ? "text-orange-600 font-semibold"
+                : "text-muted-foreground"
             }`}
           >
             Live Tenders
           </Link>
           <Link
             href="/#how-it-works"
-            className="text-muted-foreground transition-colors hover:text-orange-600"
+            className={`transition-colors hover:text-orange-600 ${
+              activeSection === "how-it-works"
+                ? "text-orange-600 font-semibold"
+                : "text-muted-foreground"
+            }`}
           >
             How It Works
           </Link>
           <Link
             href="/#contact"
-            className="text-muted-foreground transition-colors hover:text-orange-600"
+            className={`transition-colors hover:text-orange-600 ${
+              activeSection === "contact"
+                ? "text-orange-600 font-semibold"
+                : "text-muted-foreground"
+            }`}
           >
             Contact Us
           </Link>

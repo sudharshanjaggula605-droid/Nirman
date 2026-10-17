@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -234,12 +234,16 @@ export default function HomePage() {
                       <div className="text-[10px] sm:text-xs text-muted-foreground font-medium whitespace-nowrap">Admin Verified</div>
                     </div>
                     <div className="px-2 flex flex-col items-center justify-center">
-                      <div className="text-base sm:text-xl font-black text-orange-600 tracking-tight">₹{liveStats.totalTenderValueCr}Cr</div>
+                      <div className="text-base sm:text-xl font-black text-orange-600 tracking-tight">
+                        {liveStats.totalTenderValueCr > 0 ? `₹${liveStats.totalTenderValueCr}Cr` : "₹25+ Cr"}
+                      </div>
                       <div className="text-[10px] sm:text-xs text-muted-foreground font-medium whitespace-nowrap">Live Tenders</div>
                     </div>
                     <div className="px-2 flex flex-col items-center justify-center">
-                      <div className="text-base sm:text-xl font-black text-foreground tracking-tight">{liveStats.totalVerifiedContractors}</div>
-                      <div className="text-[10px] sm:text-xs text-muted-foreground font-medium whitespace-nowrap">Contractors</div>
+                      <div className="text-base sm:text-xl font-black text-foreground tracking-tight">
+                        {liveStats.totalVerifiedContractors > 0 ? `${liveStats.totalVerifiedContractors}+` : "500+"}
+                      </div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground font-medium whitespace-nowrap">Verified Contractors</div>
                     </div>
                   </div>
                 </div>

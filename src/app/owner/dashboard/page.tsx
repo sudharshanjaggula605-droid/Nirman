@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Building2,
   FileText,
@@ -22,6 +23,7 @@ import { getTimeBasedGreeting, formatDate, formatCurrency } from "@/frontend/lib
 import { useLanguage } from "@/frontend/lib/i18n/language-context";
 
 export default function OwnerDashboardPage() {
+  const router = useRouter();
   const { t } = useLanguage();
   const [profile, setProfile] = useState<any>(null);
   const [projects, setProjects] = useState<any[]>([]);
@@ -123,7 +125,7 @@ export default function OwnerDashboardPage() {
   }
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-32" id="owner-dashboard-container">
       {/* Top Greeting Banner */}
       <div className="rounded-3xl border bg-gradient-to-r from-orange-500/10 via-background to-amber-500/10 p-6 sm:p-8 relative overflow-hidden shadow-sm">
         <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -200,55 +202,71 @@ export default function OwnerDashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="rounded-2xl border bg-card p-5 space-y-3">
+      <div className="rounded-2xl border bg-card p-5 space-y-3" id="owner-quick-actions">
         <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Quick Actions
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Link
-            href="/owner/projects/new"
-            className="flex items-center justify-between rounded-xl border bg-orange-500/10 p-3.5 text-xs font-bold text-orange-600 hover:bg-orange-500/20 transition-colors"
+          <button
+            type="button"
+            id="quick-action-post-project"
+            onClick={() => router.push("/owner/projects/new")}
+            className="flex items-center justify-between rounded-xl border bg-orange-500/10 p-3.5 text-xs font-bold text-orange-600 hover:bg-orange-500/20 transition-colors cursor-pointer w-full text-left"
           >
             <span>+ Post New Project</span>
             <ChevronRight className="h-4 w-4" />
-          </Link>
-          <Link
-            href="/owner/tenders"
-            className="flex items-center justify-between rounded-xl border bg-muted/40 p-3.5 text-xs font-bold text-foreground hover:bg-accent transition-colors"
+          </button>
+          <button
+            type="button"
+            id="quick-action-my-tenders"
+            onClick={() => router.push("/owner/tenders")}
+            className="flex items-center justify-between rounded-xl border bg-muted/40 p-3.5 text-xs font-bold text-foreground hover:bg-accent transition-colors cursor-pointer w-full text-left"
           >
             <span>View My Tenders</span>
             <ChevronRight className="h-4 w-4" />
-          </Link>
-          <Link
-            href="/owner/bids"
-            className="flex items-center justify-between rounded-xl border bg-muted/40 p-3.5 text-xs font-bold text-foreground hover:bg-accent transition-colors"
+          </button>
+          <button
+            type="button"
+            id="quick-action-received-bids"
+            onClick={() => router.push("/owner/bids")}
+            className="flex items-center justify-between rounded-xl border bg-muted/40 p-3.5 text-xs font-bold text-foreground hover:bg-accent transition-colors cursor-pointer w-full text-left"
           >
             <span>View Received Bids</span>
             <ChevronRight className="h-4 w-4" />
-          </Link>
-          <Link
-            href="/owner/projects?status=active"
-            className="flex items-center justify-between rounded-xl border bg-muted/40 p-3.5 text-xs font-bold text-foreground hover:bg-accent transition-colors"
+          </button>
+          <button
+            type="button"
+            id="quick-action-active-projects"
+            onClick={() => router.push("/owner/projects?status=active")}
+            className="flex items-center justify-between rounded-xl border bg-muted/40 p-3.5 text-xs font-bold text-foreground hover:bg-accent transition-colors cursor-pointer w-full text-left"
           >
             <span>View Active Projects</span>
             <ChevronRight className="h-4 w-4" />
-          </Link>
+          </button>
         </div>
       </div>
 
       {/* Active Project Progress Bar Section */}
-      {firstActiveProject && (
-        <div className="rounded-2xl border bg-card p-6 space-y-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-extrabold text-foreground">Active Project Progress</h2>
-              <p className="text-xs text-muted-foreground">Real-time completion milestone tracking</p>
-            </div>
-            <Link href="/owner/projects?status=active" className="text-xs font-bold text-orange-600 hover:underline">
-              View All Projects →
-            </Link>
+      <div className="rounded-2xl border bg-card p-6 space-y-4 shadow-sm" id="active-project-progress-card">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-extrabold text-foreground">Active Project Progress</h2>
+            <p className="text-xs text-muted-foreground">Real-time completion milestone tracking</p>
           </div>
+          <Link
+            id="link-view-all-active-projects"
+            href="/owner/projects?status=active"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push("/owner/projects?status=active");
+            }}
+            className="text-xs font-bold text-orange-600 hover:underline cursor-pointer"
+          >
+            View All Projects →
+          </Link>
+        </div>
 
+        {firstActiveProject ? (
           <div className="rounded-xl border bg-muted/30 p-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
@@ -259,7 +277,7 @@ export default function OwnerDashboardPage() {
                   <span>Budget: <strong className="text-foreground">{formatCurrency(firstActiveProject.estimated_budget)}</strong></span>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-orange-600 bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20">
+              <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-blue-600 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
                 Status: {(firstActiveProject.status || "ACTIVE").toUpperCase()}
               </span>
             </div>
@@ -281,14 +299,26 @@ export default function OwnerDashboardPage() {
             <div className="flex justify-end pt-1">
               <Link
                 href={`/owner/projects/${firstActiveProject.id}`}
-                className="inline-flex items-center gap-1.5 rounded-xl border bg-card px-4 py-2 text-xs font-bold text-foreground hover:bg-accent"
+                onClick={(e) => {
+                  e.preventDefault();
+                  router.push(`/owner/projects/${firstActiveProject.id}`);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-xl border bg-card px-4 py-2 text-xs font-bold text-foreground hover:bg-accent cursor-pointer"
               >
                 <Eye className="h-3.5 w-3.5 text-orange-600" /> View Project Details
               </Link>
             </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="rounded-xl border border-dashed p-6 text-center space-y-2 bg-muted/10">
+            <Building2 className="h-8 w-8 text-muted-foreground mx-auto" />
+            <div className="text-xs font-bold text-foreground">No Active Construction Projects</div>
+            <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
+              Draft or tendered projects will show active progress milestones once a contractor is assigned and construction begins.
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Grid: Recent Tenders & Received Bids */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

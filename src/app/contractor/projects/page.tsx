@@ -62,14 +62,14 @@ function ContractorProjectsContent() {
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">Contractor Projects</h1>
             <span className="sm:hidden text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 border border-orange-500/20 shrink-0">
-              {filteredProjects.length} Projects
+              {filteredProjects.length} {filteredProjects.length === 1 ? "Project" : "Projects"}
             </span>
           </div>
           <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">Manage active civil construction site execution and completed projects.</p>
         </div>
 
         <div className="hidden sm:block text-xs text-muted-foreground font-semibold shrink-0">
-          Showing <span className="font-extrabold text-foreground">{filteredProjects.length}</span> projects
+          Showing <span className="font-extrabold text-foreground">{filteredProjects.length}</span> {filteredProjects.length === 1 ? "project" : "projects"}
         </div>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   FileText,
   PlusCircle,
@@ -19,6 +20,7 @@ import { formatCurrency } from "@/frontend/lib/utils";
 import { getOwnerTendersAction, editTenderAction, deleteTenderAction } from "@/backend/actions/tenders";
 
 export default function OwnerTendersPage() {
+  const router = useRouter();
   const [tenders, setTenders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -123,12 +125,14 @@ export default function OwnerTendersPage() {
           </p>
         </div>
 
-        <Link
-          href="/owner/projects/new"
+        <button
+          type="button"
+          id="btn-create-new-tender"
+          onClick={() => router.push("/owner/projects/new")}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-700 transition-all w-full sm:w-auto shrink-0 cursor-pointer"
         >
           <PlusCircle className="h-4 w-4" /> Create New Tender
-        </Link>
+        </button>
       </div>
 
       {/* Tenders Table */}
@@ -253,12 +257,14 @@ export default function OwnerTendersPage() {
               Create a construction project to publish live tenders for licensed contractor bidding.
             </p>
             <div className="pt-2">
-              <Link
-                href="/owner/projects/new"
+              <button
+                type="button"
+                id="btn-create-tender-empty"
+                onClick={() => router.push("/owner/projects/new")}
                 className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-orange-700 cursor-pointer"
               >
                 <PlusCircle className="h-4 w-4" /> Create Tender
-              </Link>
+              </button>
             </div>
           </div>
         )}

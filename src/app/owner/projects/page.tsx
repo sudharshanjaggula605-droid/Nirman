@@ -2,11 +2,12 @@
 
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Building2, PlusCircle, Eye, Filter } from "lucide-react";
 import { createClient } from "@/frontend/lib/supabase/client";
 
 function OwnerProjectsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialStatusParam = searchParams.get("status");
 
@@ -20,6 +21,8 @@ function OwnerProjectsContent() {
     const statusParam = searchParams.get("status");
     if (statusParam) {
       setFilter(statusParam.toUpperCase());
+    } else {
+      setFilter("ALL");
     }
   }, [searchParams]);
 
@@ -47,13 +50,21 @@ function OwnerProjectsContent() {
     fetchProjects();
   }, []);
 
+  const handleFilterClick = (st: string) => {
+    setFilter(st);
+    const newUrl = st === "ALL" ? "/owner/projects" : `/owner/projects?status=${st.toLowerCase()}`;
+    router.replace(newUrl);
+  };
+
   const filteredProjects = projects.filter((p) => {
-    if (filter === "ALL") return true;
-    return p.status?.toLowerCase() === filter.toLowerCase();
+    const currentFilter = (filter || "ALL").toUpperCase();
+    if (currentFilter === "ALL") return true;
+    const pStatus = (p.status || "").trim().toUpperCase();
+    return pStatus === currentFilter;
   });
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12" id="owner-projects-container">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">My Construction Projects</h1>
@@ -61,8 +72,9 @@ function OwnerProjectsContent() {
         </div>
 
         <Link
+          id="btn-post-project"
           href="/owner/projects/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 sm:px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-700 transition-all w-full sm:w-auto shrink-0"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 sm:px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-orange-700 transition-all w-full sm:w-auto shrink-0 cursor-pointer"
         >
           <PlusCircle className="h-4 w-4" /> Post Project
         </Link>
@@ -77,8 +89,9 @@ function OwnerProjectsContent() {
           {["ALL", "ACTIVE", "COMPLETED", "DRAFT"].map((st) => (
             <button
               key={st}
-              onClick={() => setFilter(st)}
-              className={`rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold transition-all shrink-0 ${
+              id={`filter-btn-${st.toLowerCase()}`}
+              onClick={() => handleFilterClick(st)}
+              className={`rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold transition-all shrink-0 cursor-pointer ${
                 filter === st
                   ? "bg-orange-600 text-white shadow-md"
                   : "bg-card border text-muted-foreground hover:text-foreground"
@@ -90,8 +103,26 @@ function OwnerProjectsContent() {
         </div>
       </div>
 
-      {/* Projects Grid */}
-      {filteredProjects.length > 0 ? (
+      {/* Projects Grid or Loading Skeleton */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-2xl border bg-card/60 p-6 h-64 space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="h-4 bg-muted/60 rounded w-20" />
+                <div className="h-4 bg-muted/60 rounded-full w-16" />
+              </div>
+              <div className="h-5 bg-muted/70 rounded w-3/4" />
+              <div className="h-3 bg-muted/40 rounded w-1/2" />
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-muted/30">
+                <div className="h-4 bg-muted/40 rounded" />
+                <div className="h-4 bg-muted/40 rounded" />
+              </div>
+              <div className="h-2 bg-muted/50 rounded-full w-full" />
+            </div>
+          ))}
+        </div>
+      ) : filteredProjects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project) => {
             const statusUpper = (project.status || "ACTIVE").toUpperCase();
@@ -99,7 +130,7 @@ function OwnerProjectsContent() {
             const progressVal = project.progress_percentage ?? (project.status === "completed" ? 100 : project.status === "active" ? 50 : 0);
 
             return (
-              <div key={project.id} className="rounded-2xl border bg-card p-6 space-y-4 shadow-sm flex flex-col justify-between hover:border-orange-500/40 transition-colors">
+              <div key={project.id || project._id} className="rounded-2xl border bg-card p-6 space-y-4 shadow-sm flex flex-col justify-between hover:border-orange-500/40 transition-colors">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-orange-600 bg-orange-500/10 px-2.5 py-0.5 rounded-full border border-orange-500/20">
@@ -167,7 +198,7 @@ function OwnerProjectsContent() {
           <div className="pt-2">
             <Link
               href="/owner/projects/new"
-              className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2 text-xs font-bold text-white shadow-md hover:bg-orange-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2 text-xs font-bold text-white shadow-md hover:bg-orange-700 cursor-pointer"
             >
               <PlusCircle className="h-4 w-4" /> Create Your First Project
             </Link>
